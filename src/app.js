@@ -4,4 +4,10 @@ const app = express();
 
 app.use(express.json());
 
+// require all the routes here
+const authRoutes = require('./routes/auth.routes.js');
+
+// using the routes here
+app.use('/api/auth', authRoutes);
+
 module.exports = app;
