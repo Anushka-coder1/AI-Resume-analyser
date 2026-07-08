@@ -16,3 +16,5 @@ State - data store
 Api - communication with backend
 => services
   =>auth.api.js
+
+Applying token blackist using mongoDB
