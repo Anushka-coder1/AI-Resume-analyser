@@ -1,4 +1,5 @@
 // import React from 'react'
+import '../auth.form.scss'
 import { useNavigate, Link } from 'react-router'
 import { useAuth } from '../hooks/useAuth'
 import { useState } from 'react'
@@ -9,9 +10,9 @@ export const Register = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
-  const {loading , handleRegister = useAuth}
+  const {loading , handleRegister} = useAuth
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     await handleRegister({username , email ,password})
     navigate("/")
