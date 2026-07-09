@@ -1,230 +1,150 @@
-import "../style/home.scss";
+import '../style/home.scss'
 
 export const Home = () => {
   return (
     <main className="home">
+      {/* Background Blur Effects */}
+      <div className="bg-circle bg-circle-1"></div>
+      <div className="bg-circle bg-circle-2"></div>
 
-      {/* Background Effects */}
-      <div className="bg-gradient bg-1"></div>
-      <div className="bg-gradient bg-2"></div>
-
-      <div className="container">
-
-        {/* Hero */}
+      <div className="home-container">
         <section className="hero">
-
-          <div className="hero-badge">
-            AI Powered Interview Preparation
-          </div>
-
           <h1>
-            AI Resume
-            <span> Analyzer</span>
+            Create Your Custom <span> Interview Plan</span>
           </h1>
 
           <p>
-            Upload your resume, paste the job description and let AI generate
-            personalized interview questions, identify skill gaps and prepare a
-            roadmap for your next interview.
+            Let AI generate personalized interview questions, identify skill
+            gaps and create your interview preparation roadmap.
           </p>
-
-          <div className="hero-features">
-
-            <div className="feature-card">
-              <span>📄</span>
-              <div>
-                <h4>Resume Analysis</h4>
-                <p>ATS style evaluation</p>
-              </div>
-            </div>
-
-            <div className="feature-card">
-              <span>🎯</span>
-              <div>
-                <h4>Interview Questions</h4>
-                <p>Technical + Behavioural</p>
-              </div>
-            </div>
-
-            <div className="feature-card">
-              <span>📈</span>
-              <div>
-                <h4>Preparation Plan</h4>
-                <p>Personalized roadmap</p>
-              </div>
-            </div>
-
-          </div>
-
         </section>
 
-        {/* Main Form */}
+        <section className="main-card">
+          {/* LEFT SIDE */}
 
-        <section className="interview-form">
-
-          {/* Job Description */}
-
-          <div className="glass-card">
-
-            <div className="section-title">
-              <div className="icon">💼</div>
+          <div className="left-panel">
+            <div className="section-header">
+              <div className="section-icon">💼</div>
 
               <div>
-                <h3>Job Description</h3>
+                <h3>Target Job Description</h3>
+
                 <p>
-                  Paste the complete job description to get a better analysis.
+                  Paste the complete job description for better AI analysis.
                 </p>
               </div>
-
             </div>
 
             <textarea
-              className="jobDescription"
               id="jobDescription"
-              placeholder="Paste the complete job description here..."
+              className="jobDescription"
+              placeholder={`Example:
+
+Senior Frontend Engineer
+
+Requirements
+
+• React.js
+• TypeScript
+• Node.js
+• REST APIs
+• Problem Solving
+• System Design
+• Team Collaboration`}
             />
 
+            <div className="character-count">0 / 5000 Characters</div>
           </div>
 
-          {/* Bottom Grid */}
+          {/* RIGHT SIDE */}
 
-          <div className="bottom-grid">
+          <div className="right-panel">
+            <div className="section-header">
+              <div className="section-icon">👤</div>
 
-            {/* Resume */}
+              <div>
+                <h3>Your Profile</h3>
 
-            <div className="glass-card">
-
-              <div className="section-title">
-
-                <div className="icon">📄</div>
-
-                <div>
-                  <h3>Resume</h3>
-
-                  <p>
-                    PDF format recommended
-                  </p>
-
-                </div>
-
+                <p>Upload your resume or describe yourself.</p>
               </div>
+            </div>
 
-              <div className="upload-area">
+            {/* Resume Upload */}
 
-                <div className="upload-icon">
-                  ☁️
-                </div>
+            <div className="upload-section">
+              <label htmlFor="resume">
+                Upload Resume
+                <span> (Recommended)</span>
+              </label>
 
-                <h4>Drag & Drop Resume</h4>
+              <label htmlFor="resume" className="upload-box">
+                <div className="upload-icon">☁</div>
 
-                <p>
-                  or
-                </p>
+                <h4>Click to Upload</h4>
 
-                <label
-                  htmlFor="resume"
-                  className="upload-btn"
-                >
-                  Browse PDF
-                </label>
+                <p>or Drag & Drop</p>
 
-                <input
-                  type="file"
-                  id="resume"
-                  accept=".pdf"
-                />
+                <small>PDF (Max 5MB)</small>
+              </label>
 
-                <small>
-                  Supported format : PDF
-                </small>
+              <input type="file" id="resume" accept=".pdf" />
+            </div>
 
-              </div>
+            {/* Divider */}
 
+            <div className="divider">
+              <span>OR</span>
             </div>
 
             {/* Self Description */}
 
-            <div className="glass-card">
-
-              <div className="section-title">
-
-                <div className="icon">👤</div>
-
-                <div>
-
-                  <h3>Self Description</h3>
-
-                  <p>
-                    Tell the AI about yourself.
-                  </p>
-
-                </div>
-
-              </div>
+            <div className="self-description-section">
+              <label htmlFor="selfDescription">Quick Self Description</label>
 
               <textarea
-                className="selfDescription"
                 id="selfDescription"
-                placeholder="Example:
+                className="selfDescription"
+                placeholder={`Briefly describe yourself...
 
-• Passionate Full Stack Developer
-• MERN Stack
-• React.js, Node.js, MongoDB
-• Good problem solving skills
-• Built AI projects
-• Strong communication
-• Team player
-"
+• Years of experience
+• Technical skills
+• Projects
+• Achievements
+• Career Goals`}
               />
-
             </div>
 
-          </div>
+            {/* Info */}
 
-          {/* Tips */}
+            <div className="info-box">
+              <span>ℹ</span>
 
-          <div className="tips-card">
-
-            <div className="tips-header">
-              💡 Tips for Best Results
+              <p>
+                Either <strong>Resume</strong> or{' '}
+                <strong>Self Description</strong> is required for generating
+                your personalized interview report.
+              </p>
             </div>
 
-            <ul>
+            {/* Button */}
 
-              <li>
-                Upload your latest resume.
-              </li>
-
-              <li>
-                Paste the complete job description.
-              </li>
-
-              <li>
-                Add a short self introduction.
-              </li>
-
-              <li>
-                Mention your strongest technical skills.
-              </li>
-
-            </ul>
-
+            <button className="generate-btn">
+              ✨ Generate AI Interview Report
+            </button>
           </div>
-
-          {/* CTA */}
-
-          <button className="generate-btn">
-
-            <span>✨</span>
-
-            Generate AI Interview Report
-
-          </button>
-
         </section>
 
-      </div>
 
+        {/* ================= FOOTER ================= */}
+
+        <footer className="footer">
+          <a href="#">Privacy Policy</a>
+
+          <a href="#">Terms of Service</a>
+
+          <a href="#">Help Center</a>
+        </footer>
+      </div>
     </main>
-  );
-};
+  )
+}
