@@ -12,11 +12,8 @@ $card-light: #1b2230;
 
 $text: #f5f7fb;
 $text-secondary: #757c86;
-
 $border: rgba(255, 255, 255, 0.08);
-
 $shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
-
 $radius: 22px;
 
 * {
@@ -37,23 +34,16 @@ body {
 
 .home {
   min-height: 100vh;
-
   background: linear-gradient(180deg, #090d15 0%, #0f141d 100%);
-
   position: relative;
-
   overflow: hidden;
-
   padding: 60px 25px;
 }
 
 .home-container {
   max-width: 1300px;
-
   margin: auto;
-
   position: relative;
-
   z-index: 5;
 }
 
@@ -63,35 +53,24 @@ body {
 
 .bg-circle {
   position: absolute;
-
   border-radius: 50%;
-
   filter: blur(140px);
-
   opacity: 0.15;
 }
 
 .bg-circle-1 {
   width: 420px;
-
   height: 420px;
-
   background: $primary;
-
   left: -150px;
-
   top: -150px;
 }
 
 .bg-circle-2 {
   width: 450px;
-
   height: 450px;
-
   background: #7425ff;
-
   right: -170px;
-
   bottom: -170px;
 }
 
@@ -101,27 +80,18 @@ body {
 
 .hero {
   text-align: center;
-
   margin-bottom: 45px;
 }
 
 .badge {
   display: inline-block;
-
   padding: 10px 18px;
-
   border-radius: 999px;
-
   background: rgba(210, 13, 59, 0.12);
-
   color: $primary-light;
-
   font-size: 0.9rem;
-
   font-weight: 600;
-
   border: 1px solid rgba(210, 13, 59, 0.3);
-
   margin-bottom: 22px;
 }
 
@@ -134,7 +104,7 @@ body {
 
 .hero span {
   background: linear-gradient(90deg, $primary, #ff5bc7, #8b5cf6);
-  -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -152,21 +122,13 @@ body {
 
 .main-card {
   display: grid;
-
   grid-template-columns: 1.2fr 0.9fr;
-
   gap: 30px;
-
   padding: 32px;
-
   border-radius: 28px;
-
   background: rgba(20, 25, 34, 0.92);
-
   backdrop-filter: blur(18px);
-
   border: 1px solid rgba(255, 255, 255, 0.06);
-
   box-shadow: $shadow;
 }
 
@@ -177,13 +139,11 @@ body {
 .left-panel,
 .right-panel {
   display: flex;
-
   flex-direction: column;
 }
 
 .left-panel {
   border-right: 1px solid rgba(255, 255, 255, 0.06);
-
   padding-right: 25px;
 }
 
@@ -197,41 +157,29 @@ body {
 
 .section-header {
   display: flex;
-
   align-items: center;
-
   gap: 15px;
-
   margin-bottom: 22px;
 }
 
 .section-icon {
   width: 55px;
-
   height: 55px;
-
   display: grid;
-
   place-items: center;
-
   border-radius: 16px;
-
   background: rgba(210, 13, 59, 0.12);
-
   color: $primary;
-
   font-size: 1.4rem;
 }
 
 .section-header h3 {
   font-size: 1.2rem;
-
   margin-bottom: 4px;
 }
 
 .section-header p {
   color: $text-secondary;
-
   font-size: 0.9rem;
 }
 
@@ -241,25 +189,15 @@ body {
 
 textarea {
   width: 100%;
-
   background: $card-light;
-
   color: white;
-
   border: 1px solid transparent;
-
   border-radius: 18px;
-
   resize: none;
-
   padding: 20px;
-
   font-size: 15px;
-
   line-height: 1.8;
-
   transition: 0.3s;
-
   outline: none;
 }
 
@@ -269,7 +207,6 @@ textarea::placeholder {
 
 textarea:focus {
   border-color: $primary;
-
   box-shadow: 0 0 0 4px rgba(210, 13, 59, 0.18);
 }
 
@@ -289,11 +226,8 @@ textarea:focus {
 
 .character-count {
   margin-top: 12px;
-
   text-align: right;
-
   color: $text-secondary;
-
   font-size: 0.82rem;
 }
 
@@ -303,91 +237,62 @@ textarea:focus {
 
 .upload-section {
   display: flex;
-
   flex-direction: column;
-
   gap: 14px;
-
   margin-bottom: 25px;
 }
 
 .upload-section label:first-child {
   font-size: 0.95rem;
-
   font-weight: 600;
 }
 
 .upload-section label span {
   color: $primary-light;
-
   font-size: 0.82rem;
 }
 
 .upload-box {
   min-height: 220px;
-
   border: 2px dashed rgba(255, 255, 255, 0.15);
-
   border-radius: 18px;
-
   background: $card-light;
-
   display: flex;
-
   flex-direction: column;
-
   justify-content: center;
-
   align-items: center;
-
   text-align: center;
-
   cursor: pointer;
-
   transition: 0.3s;
-
   padding: 20px;
 }
 
 .upload-box:hover {
   border-color: $primary;
-
   background: rgba(210, 13, 59, 0.05);
-
   transform: translateY(-4px);
-
   box-shadow: 0 20px 40px rgba(210, 13, 59, 0.15);
 }
 
 .upload-icon {
   width: 70px;
-
   height: 70px;
-
   border-radius: 50%;
-
   display: grid;
-
   place-items: center;
-
   background: rgba(210, 13, 59, 0.12);
-
   color: $primary;
-
   font-size: 2rem;
-
   margin-bottom: 18px;
 }
 
 .upload-box h4 {
   font-size: 1.15rem;
-
   margin-bottom: 8px;
 }
 
 .upload-box p {
   color: $text-secondary;
-
   margin-bottom: 10px;
 }
 
@@ -405,28 +310,21 @@ input[type='file'] {
 
 .divider {
   display: flex;
-
   align-items: center;
-
   gap: 15px;
-
   margin: 28px 0;
 }
 
 .divider::before,
 .divider::after {
   content: '';
-
   flex: 1;
-
   height: 1px;
-
   background: rgba(255, 255, 255, 0.08);
 }
 
 .divider span {
   color: $text-secondary;
-
   font-size: 0.9rem;
 }
 
@@ -436,15 +334,12 @@ input[type='file'] {
 
 .self-description-section {
   display: flex;
-
   flex-direction: column;
-
   gap: 14px;
 }
 
 .self-description-section label {
   font-size: 0.95rem;
-
   font-weight: 600;
 }
 
@@ -454,19 +349,12 @@ input[type='file'] {
 
 .info-box {
   display: flex;
-
   align-items: flex-start;
-
   gap: 14px;
-
   margin: 24px 0;
-
   padding: 16px 18px;
-
   border-radius: 16px;
-
   background: rgba(59, 130, 246, 0.12);
-
   border: 1px solid rgba(59, 130, 246, 0.18);
 }
 
@@ -476,9 +364,7 @@ input[type='file'] {
 
 .info-box p {
   color: #cfd8e3;
-
   line-height: 1.6;
-
   font-size: 0.9rem;
 }
 
@@ -492,43 +378,26 @@ input[type='file'] {
 
 .generate-btn {
   width: 100%;
-
   height: 58px;
-
   border: none;
-
   border-radius: 16px;
-
   background: linear-gradient(135deg, $primary, #ff4778);
-
   color: white;
-
   font-size: 1rem;
-
   font-weight: 700;
-
   cursor: pointer;
-
   transition: 0.3s;
-
   position: relative;
-
   overflow: hidden;
 }
 
 .generate-btn::before {
   content: '';
-
   position: absolute;
-
   left: -100%;
-
   top: 0;
-
   width: 100%;
-
   height: 100%;
-
   background: linear-gradient(
     120deg,
     transparent,
@@ -545,7 +414,6 @@ input[type='file'] {
 
 .generate-btn:hover {
   transform: translateY(-3px);
-
   box-shadow: 0 18px 40px rgba(210, 13, 59, 0.35);
 }
 
@@ -555,19 +423,14 @@ input[type='file'] {
 
 .footer {
   margin-top: 40px;
-
   display: flex;
-
   justify-content: center;
-
   gap: 40px;
 }
 
 .footer a {
   text-decoration: none;
-
   color: $text-secondary;
-
   transition: 0.3s;
 }
 
@@ -585,7 +448,6 @@ textarea::-webkit-scrollbar {
 
 textarea::-webkit-scrollbar-thumb {
   background: rgba(210, 13, 59, 0.45);
-
   border-radius: 20px;
 }
 
@@ -605,20 +467,14 @@ textarea::-webkit-scrollbar-thumb:hover {
 @keyframes fadeUp {
   from {
     opacity: 0;
-
     transform: translateY(20px);
   }
 
   to {
     opacity: 1;
-
     transform: translateY(0);
   }
 }
-
-// ====================================
-// RESPONSIVE
-// ====================================
 
 @media (max-width: 1100px) {
   .main-card {
@@ -627,13 +483,9 @@ textarea::-webkit-scrollbar-thumb:hover {
 
   .left-panel {
     border-right: none;
-
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-
     padding-right: 0;
-
     padding-bottom: 30px;
-
     margin-bottom: 20px;
   }
 
@@ -669,9 +521,7 @@ textarea::-webkit-scrollbar-thumb:hover {
 
   .footer {
     flex-direction: column;
-
     align-items: center;
-
     gap: 16px;
   }
 }
