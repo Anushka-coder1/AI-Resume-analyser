@@ -10,13 +10,13 @@ const ai = new GoogleGenAI({
 const interviewReportSchema = z.object({
   matchScore:z.number().describe("A score between 0 and 100 indicating how well the candidated's profile matches the job description"),
 
-  technicalQuestion: z.array(z.object({
+  technicalQuestions: z.array(z.object({
     question:z.string().describe("The technical questions that can be asked in an interview"),
     intention:z.string().describe("The intension of interviewer behind this question"),
     answer:z.string().describe("How to answer this question , what points to cover , what approach to take etc.")
   })).describe("technicals questions that can be asked in the interview along with their intensions and how to answer them"),
 
-  behavioralQuestion: z.array(z.object({
+  behavioralQuestions: z.array(z.object({
     question:z.string().describe("The behavioral questions that can be asked in an interview"),
     intention:z.string().describe("The intension of interviewer behind this question"),
     answer:z.string().describe("How to answer this question , what points to cover , what approach to take etc.")
@@ -32,9 +32,10 @@ const interviewReportSchema = z.object({
     focus:z.string().describe("The main focus of the day in the preparation plan, e.g.data structure , system design , mock interview "),
     task:z.string().describe("List of the tasks to be done on this day to follow the preparation plan e.g. read a specific book or video on youtube")
   })).describe("A day-wise preparation plan for the candidate to follow in order to prepare for interview effectively"),
+  title:z.string().describe("The title of the job for which the interview report is generated"),
 })
 
-async function generateInterviewReport(){
+async function generateInterviewReport(resume , selfDescription , jobDescription){
 
   const prompt = `Generate ONLY valid JSON.
 Do not include markdown.

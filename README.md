@@ -17,4 +17,6 @@ Api - communication with backend
 => services
   =>auth.api.js
 
-Applying token blackist using mongoDB
+Applying token blackist using mongoDB 
+
+// 4:40:00
