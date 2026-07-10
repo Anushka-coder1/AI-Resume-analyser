@@ -1,84 +1,87 @@
-const pdfParse = require("pdf-parse")
-const generateInterviewReport = require("../services/ai.service")
-const interviewReportModel= require("../models/interview.model")
+const { PDFParse } = require('pdf-parse')
+const generateInterviewReport = require('../services/ai.service')
+const interviewReportModel = require('../models/interview.model')
 
-/**
- * @description Controller to generate report based on resume , self description and job description
- */
+async function generateInterviewReportController(req, res) {
+  const { selfDescription = '', jobDescription = '' } = req.body
 
-async function generateInterviewReportController(req,res){
-  const resumeFile = req.file
+  if (!jobDescription.trim()) {
+    return res.status(400).json({
+      message: 'Job description is required',
+    })
+  }
 
-  const resumeContent = (new pdfParse.PDFParse(Uint8Array.from(req.file.buffer))).getText
-  const {selfDescription , jobDescription} = req.body
+  if (!req.file && !selfDescription.trim()) {
+    return res.status(400).json({
+      message: 'Upload a resume or provide a self description',
+    })
+  }
 
-  const interviewReportBtAi = await generateInterviewReport({
-    resume:resumeContent.text,
-    selfDescription,
-    jobDescription
+  let resumeText = ''
+
+  if (req.file) {
+    const parser = new PDFParse({ data: Uint8Array.from(req.file.buffer) })
+    const parsedResume = await parser.getText()
+    resumeText = parsedResume.text.trim()
+    await parser.destroy()
+  }
+
+  const interviewReportByAi = await generateInterviewReport({
+    resume: resumeText,
+    selfDescription: selfDescription.trim(),
+    jobDescription: jobDescription.trim(),
   })
 
   const interviewReport = await interviewReportModel.create({
-    user:req.user.id,
-    resume:resumeContent,
-    selfDescription,
-    jobDescription,
-    ...interviewReportBtAi
+    user: req.user.id,
+    resume: resumeText,
+    selfDescription: selfDescription.trim(),
+    jobDescription: jobDescription.trim(),
+    ...interviewReportByAi,
   })
 
   res.status(201).json({
-    message:"interview report generated successsfully",
-    interviewReport
+    message: 'Interview report generated successfully',
+    interviewReport,
   })
-
 }
 
-/**
- * @description Controller to get report by interview id
- */
-
-async function getInterviewReportByIdController(req,res){
-  const { interviewId} = req.params
+async function getInterviewReportByIdController(req, res) {
+  const { interviewId } = req.params
 
   const interviewReport = await interviewReportModel.findOne({
-    _id : interviewId,
-    user:req.user.id
+    _id: interviewId,
+    user: req.user.id,
   })
 
-  if(!interviewReport){
+  if (!interviewReport) {
     return res.status(404).json({
-      message:"interview report not found"
+      message: 'Interview report not found',
     })
   }
 
   res.status(200).json({
-    message:"interview report fetched successfully.",
-    interviewReport
+    message: 'Interview report fetched successfully.',
+    interviewReport,
   })
 }
 
-/**
- * @description get all interview by user id
- */
-
-async function getAllInterviewReportaController(req,res){
-  const { interviewId} = req.params
-
-  const interviewReports = await interviewReportModel.findOne({
-    user:req.user.id
-  }).sort({createdAt:-1}).select("-resume -selfDescription -jobDescription -_v -techicalQuestion  -behaviouralQuestion -skillGaps -preparationPlan")
-
-  if(!interviewReports){
-    return res.status(404).json({
-      message:"interview report not found"
+async function getAllInterviewReportaController(req, res) {
+  const interviewReports = await interviewReportModel
+    .find({
+      user: req.user.id,
     })
-  }
+    .sort({ createdAt: -1 })
+    .select('title matchScore createdAt updatedAt')
 
   res.status(200).json({
-    message:"interview report fetched successfully.",
-    interviewReport
+    message: 'Interview reports fetched successfully.',
+    interviewReports,
   })
 }
 
-
-module.exports = {generateInterviewReportController , getInterviewReportByIdController , getAllInterviewReportaController}
+module.exports = {
+  generateInterviewReportController,
+  getInterviewReportByIdController,
+  getAllInterviewReportaController,
+}

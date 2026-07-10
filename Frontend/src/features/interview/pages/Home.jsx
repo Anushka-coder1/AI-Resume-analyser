@@ -1,41 +1,76 @@
 import '../style/home.scss'
+import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router'
+import { useInterview } from '../hooks/useInterview'
 
 export const Home = () => {
+  const { loading, error, reports, generateReport, getReports } = useInterview()
+  const [jobDescription, setJobDescription] = useState('')
+  const [selfDescription, setSelfDescription] = useState('')
+  const [localError, setLocalError] = useState('')
+  const [resumeFileName, setResumeFileName] = useState('')
+  const resumeInputRef = useRef(null)
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    getReports().catch(() => {})
+  }, [getReports])
+
+  const handleGenerateReport = async () => {
+    const resumeFile = resumeInputRef.current?.files?.[0]
+
+    if (!jobDescription.trim()) {
+      setLocalError('Add the target job description before generating a report.')
+      return
+    }
+
+    if (!resumeFile && !selfDescription.trim()) {
+      setLocalError('Upload a resume or add a self description so the analysis has enough context.')
+      return
+    }
+
+    setLocalError('')
+
+    try {
+      const report = await generateReport({ jobDescription, selfDescription, resumeFile })
+      navigate(`/interview/${report._id}`)
+    } catch {
+      return
+    }
+  }
+
+  const activeError = localError || error
+
   return (
     <main className="home">
-      {/* Background Blur Effects */}
       <div className="bg-circle bg-circle-1"></div>
       <div className="bg-circle bg-circle-2"></div>
 
       <div className="home-container">
         <section className="hero">
+          <p className="badge">Personalized interview prep</p>
           <h1>
-            Create Your Custom <span> Interview Plan</span>
+            Turn any job post into a <span>focused interview plan</span>
           </h1>
-
           <p>
-            Let AI generate personalized interview questions, identify skill
-            gaps and create your interview preparation roadmap.
+            Upload your resume, add a quick profile summary, and get a clean dashboard
+            with match score, likely questions, skill gaps, and a day-by-day roadmap.
           </p>
         </section>
 
         <section className="main-card">
-          {/* LEFT SIDE */}
-
           <div className="left-panel">
             <div className="section-header">
-              <div className="section-icon">💼</div>
-
+              <div className="section-icon">JD</div>
               <div>
                 <h3>Target Job Description</h3>
-
-                <p>
-                  Paste the complete job description for better AI analysis.
-                </p>
+                <p>Paste the role details you want to prepare for.</p>
               </div>
             </div>
 
             <textarea
+              value={jobDescription}
+              onChange={(e) => setJobDescription(e.target.value)}
               id="jobDescription"
               className="jobDescription"
               placeholder={`Example:
@@ -53,23 +88,17 @@ Requirements
 • Team Collaboration`}
             />
 
-            <div className="character-count">0 / 5000 Characters</div>
+            <div className="character-count">{jobDescription.length} characters</div>
           </div>
-
-          {/* RIGHT SIDE */}
 
           <div className="right-panel">
             <div className="section-header">
-              <div className="section-icon">👤</div>
-
+              <div className="section-icon">CV</div>
               <div>
                 <h3>Your Profile</h3>
-
-                <p>Upload your resume or describe yourself.</p>
+                <p>Upload your resume, add a summary, or use both.</p>
               </div>
             </div>
-
-            {/* Resume Upload */}
 
             <div className="upload-section">
               <label htmlFor="resume">
@@ -78,30 +107,32 @@ Requirements
               </label>
 
               <label htmlFor="resume" className="upload-box">
-                <div className="upload-icon">☁</div>
-
-                <h4>Click to Upload</h4>
-
-                <p>or Drag & Drop</p>
-
-                <small>PDF (Max 5MB)</small>
+                <div className="upload-icon">PDF</div>
+                <h4>{resumeFileName || 'Choose a resume file'}</h4>
+                <p>PDF only, max 3 MB</p>
+                <small>Used only to generate your interview report.</small>
               </label>
 
-              <input type="file" id="resume" accept=".pdf" />
+              <input
+                ref={resumeInputRef}
+                type="file"
+                id="resume"
+                accept=".pdf"
+                onChange={(e) => {
+                  setResumeFileName(e.target.files?.[0]?.name || '')
+                }}
+              />
             </div>
-
-            {/* Divider */}
 
             <div className="divider">
               <span>OR</span>
             </div>
 
-            {/* Self Description */}
-
             <div className="self-description-section">
               <label htmlFor="selfDescription">Quick Self Description</label>
-
               <textarea
+                value={selfDescription}
+                onChange={(e) => setSelfDescription(e.target.value)}
                 id="selfDescription"
                 className="selfDescription"
                 placeholder={`Briefly describe yourself...
@@ -110,39 +141,65 @@ Requirements
 • Technical skills
 • Projects
 • Achievements
-• Career Goals`}
+• Career goals`}
               />
             </div>
 
-            {/* Info */}
-
             <div className="info-box">
-              <span>ℹ</span>
-
+              <span>i</span>
               <p>
-                Either <strong>Resume</strong> or{' '}
-                <strong>Self Description</strong> is required for generating
-                your personalized interview report.
+                Either <strong>Resume</strong> or <strong>Self Description</strong> is
+                required for generating your personalized interview report.
               </p>
             </div>
 
-            {/* Button */}
+            {activeError ? <p className="panel-message error">{activeError}</p> : null}
 
-            <button className="generate-btn">
-              ✨ Generate AI Interview Report
+            <button
+              onClick={handleGenerateReport}
+              className="generate-btn"
+              disabled={loading}
+            >
+              {loading ? 'Generating report...' : 'Generate AI Interview Report'}
             </button>
           </div>
         </section>
 
+        <section className="history-panel">
+          <div className="history-header">
+            <h2>Recent reports</h2>
+            <p>Jump back into previous interview prep sessions.</p>
+          </div>
 
-        {/* ================= FOOTER ================= */}
+          <div className="history-grid">
+            {reports.length ? (
+              reports.map((report) => (
+                <button
+                  key={report._id}
+                  type="button"
+                  className="history-card"
+                  onClick={() => navigate(`/interview/${report._id}`)}
+                >
+                  <div>
+                    <p className="history-title">{report.title}</p>
+                    <p className="history-date">
+                      {new Date(report.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <span className="history-score">{report.matchScore}%</span>
+                </button>
+              ))
+            ) : (
+              <div className="history-empty">
+                <h3>No reports yet</h3>
+                <p>Your generated interview plans will appear here.</p>
+              </div>
+            )}
+          </div>
+        </section>
 
         <footer className="footer">
-          <a href="#">Privacy Policy</a>
-
-          <a href="#">Terms of Service</a>
-
-          <a href="#">Help Center</a>
+          <span>Sharper prep, cleaner feedback, faster iterations.</span>
         </footer>
       </div>
     </main>

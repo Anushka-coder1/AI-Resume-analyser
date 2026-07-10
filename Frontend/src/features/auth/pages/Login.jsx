@@ -1,10 +1,10 @@
 import '../auth.form.scss'
-import { useNavigate, Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { useAuth } from '../hooks/useAuth'
 import { useState } from 'react'
 
 export const Login = () => {
-  const { loading, handleLogin } = useAuth()
+  const { loading, error, handleLogin } = useAuth()
   const navigate = useNavigate()
 
   const [email, setEmail] = useState('')
@@ -12,27 +12,40 @@ export const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    await handleLogin({email , password})
-    navigate('/')
+
+    try {
+      await handleLogin({ email, password })
+      navigate('/')
+    } catch {
+      return
+    }
   }
 
-  if(loading){
+  if (loading) {
     return (
-      <main><h1>Loading......</h1></main>
+      <main className="auth-page">
+        <div className="auth-card auth-card--status">
+          <h1>Checking your session...</h1>
+        </div>
+      </main>
     )
   }
 
   return (
-    <main>
-      <div className="form-container">
-        <h1>Login</h1>
+    <main className="auth-page">
+      <div className="auth-card">
+        <p className="eyebrow">AI Resume Analyser</p>
+        <h1>Welcome back</h1>
+        <p className="auth-subtitle">
+          Sign in to generate interview reports and revisit your preparation plans.
+        </p>
+
         <form onSubmit={handleSubmit}>
           <div className="input-group">
             <label htmlFor="email">Email</label>
             <input
-              onChange={(e) => {
-                setEmail(e.target.value)
-              }}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               type="email"
               id="email"
               name="email"
@@ -43,9 +56,8 @@ export const Login = () => {
           <div className="input-group">
             <label htmlFor="password">Password</label>
             <input
-              onChange={(e) => {
-                setPassword(e.target.value)
-              }}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               type="password"
               id="password"
               name="password"
@@ -53,11 +65,15 @@ export const Login = () => {
             />
           </div>
 
-          <button className="button primary-button">Login</button>
+          {error ? <p className="form-message error">{error}</p> : null}
+
+          <button className="button primary-button" type="submit">
+            Login
+          </button>
         </form>
-        <p>
-          {' '}
-          Don't have an account ? <Link to="/register">Register</Link>
+
+        <p className="auth-switch">
+          Don&apos;t have an account? <Link to="/register">Register</Link>
         </p>
       </div>
     </main>
