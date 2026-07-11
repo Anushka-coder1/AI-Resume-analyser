@@ -228,58 +228,21 @@ Job Description: ${jobDescription}`
   }
 }
 
-// async function generatePdfFromHtml(htmlContent) {
-//   const browser = await puppeteer.launch();
-
-//   try {
-//     const page = await browser.newPage();
-
-//     await page.setContent(htmlContent, {
-//       waitUntil: "networkidle0",
-//     });
-
-//     return await page.pdf({
-//       format: "A4",
-//       margin: {
-//         top: "20mm",
-//         bottom: "20mm",
-//         left: "15mm",
-//         right: "15mm",
-//       },
-//     });
-
-//   } finally {
-//     await browser.close();
-//   }
-// }
-
 async function generatePdfFromHtml(htmlContent) {
-  console.log("1. Launching browser");
   const browser = await puppeteer.launch({ headless: false });
 
-  console.log("2. Opening page");
   const page = await browser.newPage();
 
-  console.log("3. Setting content");
   await page.setContent(htmlContent, {
     waitUntil: "load",
   });
 
-  console.log("4. Content loaded");
-
-  console.log("5. Generating PDF");
   const pdfBuffer = await page.pdf({
     format: "A4",
     printBackground: true,
   });
 
-  console.log(pdfBuffer.length);
-console.log(pdfBuffer.slice(0, 10));
-
-  console.log("6. PDF generated");
-
   await browser.close();
-  console.log("7. Browser closed");
 
   return pdfBuffer;
 }
