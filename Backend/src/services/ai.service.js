@@ -1,5 +1,6 @@
 const { GoogleGenAI } = require('@google/genai')
 const { z, toJSONSchema } = require('zod')
+const puppeteer = require("puppeteer")
 
 const ai = process.env.GOOGLE_GENAI_API_KEY
   ? new GoogleGenAI({
@@ -227,4 +228,141 @@ Job Description: ${jobDescription}`
   }
 }
 
-module.exports = generateInterviewReport
+// async function generatePdfFromHtml(htmlContent) {
+//   const browser = await puppeteer.launch();
+
+//   try {
+//     const page = await browser.newPage();
+
+//     await page.setContent(htmlContent, {
+//       waitUntil: "networkidle0",
+//     });
+
+//     return await page.pdf({
+//       format: "A4",
+//       margin: {
+//         top: "20mm",
+//         bottom: "20mm",
+//         left: "15mm",
+//         right: "15mm",
+//       },
+//     });
+
+//   } finally {
+//     await browser.close();
+//   }
+// }
+
+async function generatePdfFromHtml(htmlContent) {
+  console.log("1. Launching browser");
+  const browser = await puppeteer.launch({ headless: false });
+
+  console.log("2. Opening page");
+  const page = await browser.newPage();
+
+  console.log("3. Setting content");
+  await page.setContent(htmlContent, {
+    waitUntil: "load",
+  });
+
+  console.log("4. Content loaded");
+
+  console.log("5. Generating PDF");
+  const pdfBuffer = await page.pdf({
+    format: "A4",
+    printBackground: true,
+  });
+
+  console.log(pdfBuffer.length);
+console.log(pdfBuffer.slice(0, 10));
+
+  console.log("6. PDF generated");
+
+  await browser.close();
+  console.log("7. Browser closed");
+
+  return pdfBuffer;
+}
+
+async function generateResumePdf({resume , selfDescription , jobDescription}){
+  const resumepdfSchema = z.object({
+    html:z.string().describe("The HTML content of the resume which can be converted to pdf using any library like puppeteer")
+  })
+
+  const prompt = `
+  You are an expert resume writer with years of experience creating resumes for top technology companies.
+  
+  Your task is to create a highly professional, ATS-friendly, one-page resume using the candidate's information provided below.
+  
+  Candidate Information:
+  Resume Content:
+  ${resume}
+  
+  Self Description:
+  ${selfDescription}
+  
+  Target Job Description:
+  ${jobDescription}
+  
+  Instructions:
+  - The content should be ATS friendly i.e. it should be easily parsable by ATS System.
+  - Create a clean, modern, and professional one-page resume.
+  - The resume must look like it was written by an experienced human resume writer, not by AI.
+  - Tailor the resume specifically to the target job description.
+  - Highlight the candidate's most relevant skills, experience, projects, education, and achievements.
+  - Improve wording where necessary while remaining truthful to the provided information.
+  - Do not invent companies, degrees, projects, dates, certifications, or work experience.
+  - If some information is missing, simply omit that section instead of making up details.
+  - Prioritize content relevant to the target job.
+  - Use strong action verbs and concise bullet points.
+  - Keep the resume within one A4 page.
+  - Ensure excellent spacing, typography, and readability.
+  - Use a professional layout with clear section headings.
+  - The HTML should be print-ready and optimized for PDF generation.
+  - Use inline CSS only.
+  - Do not use JavaScript.
+  - Do not use external fonts, images, icons, CDNs, or external CSS.
+  - Use only standard HTML and inline CSS.
+  - Ensure the generated HTML renders correctly in Chromium/Puppeteer.
+  - Use black text on a white background with subtle gray accents.
+  - Keep margins suitable for A4 printing.
+  - Avoid unnecessary decorative elements.
+  
+  Output Requirements:
+  Return ONLY a valid JSON object.
+  
+  The JSON must contain exactly one field:
+  
+  {
+    "html": "<complete HTML document>"
+  }
+  
+  The value of "html" must contain:
+  - <!DOCTYPE html>
+  - <html>
+  - <head>
+  - <body>
+  
+  Return nothing except the JSON object.
+  `
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: {
+        responseMimeType: 'application/json',
+        responseJsonSchema: toJSONSchema(resumepdfSchema),
+      },
+  })
+  const jsonContent = JSON.parse(response.text)
+
+  // console.log(jsonContent)
+
+  const pdfBuffer = await generatePdfFromHtml(jsonContent.html)
+
+//   console.log("PDF Buffer:", pdfBuffer);
+// console.log("Buffer Length:", pdfBuffer?.length);
+
+  return pdfBuffer
+}
+
+module.exports = {generateInterviewReport , generateResumePdf}

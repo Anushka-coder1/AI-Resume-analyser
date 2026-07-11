@@ -1,6 +1,10 @@
 const { PDFParse } = require('pdf-parse')
-const generateInterviewReport = require('../services/ai.service')
+const {generateInterviewReport , generateResumePdf} = require('../services/ai.service')
 const interviewReportModel = require('../models/interview.model')
+
+/**
+ * @description Controller to generate interview report based on user self description , resume and job description
+ */
 
 async function generateInterviewReportController(req, res) {
   const { selfDescription = '', jobDescription = '' } = req.body
@@ -46,6 +50,10 @@ async function generateInterviewReportController(req, res) {
   })
 }
 
+/**
+ * @description Controller to get interview report be interviewId
+ */
+
 async function getInterviewReportByIdController(req, res) {
   const { interviewId } = req.params
 
@@ -66,6 +74,10 @@ async function getInterviewReportByIdController(req, res) {
   })
 }
 
+/**
+ * @description Controller to get all interview report by logged in user
+ */
+
 async function getAllInterviewReportaController(req, res) {
   const interviewReports = await interviewReportModel
     .find({
@@ -80,8 +92,36 @@ async function getAllInterviewReportaController(req, res) {
   })
 }
 
+/**
+ * @description Controller to generate pdf report based on user self description , resume and job description
+ */
+async function generateResumePdfController(req,res){
+  const {interviewReportId} = req.params
+  const interviewReport = await interviewReportModel.findById(interviewReportId)
+
+  if(!interviewReport){
+    return res.status(404).json({
+      message:"Interview Report Not Found."
+    })
+  }
+
+  const {resume , jobDescription , selfDescription} = interviewReport
+
+  const pdfBuffer = await generateResumePdf({resume ,jobDescription , selfDescription })
+
+  res.set({
+    "Content-Type" : "application/pdf",
+    "Content-Disposition":`attachment;filename = resume_${interviewReportId}.pdf`
+  })
+
+  return res.send(pdfBuffer);
+}
+
+
+
 module.exports = {
   generateInterviewReportController,
   getInterviewReportByIdController,
   getAllInterviewReportaController,
+  generateResumePdfController
 }
