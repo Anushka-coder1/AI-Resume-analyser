@@ -80,7 +80,7 @@ export const Register = () => {
 
           {error ? <p className="form-message error">{error}</p> : null}
 
-          <button className="button primary-button" type="submit">
+          <button className="generate-btn" type="submit">
             Register
           </button>
         </form>

@@ -2,6 +2,7 @@ import '../style/home.scss'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useInterview } from '../hooks/useInterview'
+import axios from 'axios'
 
 export const Home = () => {
   const { loading, error, reports, generateReport, getReports } = useInterview()
@@ -16,23 +17,42 @@ export const Home = () => {
     getReports().catch(() => {})
   }, [getReports])
 
+  const handleLogout = async () => {
+    try {
+      await axios.post('/api/auth/logout', {}, { withCredentials: true })
+    } catch (err) {
+      console.log(err)
+    }
+
+    localStorage.removeItem('token')
+    navigate('/login')
+  }
+
   const handleGenerateReport = async () => {
     const resumeFile = resumeInputRef.current?.files?.[0]
 
     if (!jobDescription.trim()) {
-      setLocalError('Add the target job description before generating a report.')
+      setLocalError(
+        'Add the target job description before generating a report.',
+      )
       return
     }
 
     if (!resumeFile && !selfDescription.trim()) {
-      setLocalError('Upload a resume or add a self description so the analysis has enough context.')
+      setLocalError(
+        'Upload a resume or add a self description so the analysis has enough context.',
+      )
       return
     }
 
     setLocalError('')
 
     try {
-      const report = await generateReport({ jobDescription, selfDescription, resumeFile })
+      const report = await generateReport({
+        jobDescription,
+        selfDescription,
+        resumeFile,
+      })
       navigate(`/interview/${report._id}`)
     } catch {
       return
@@ -45,7 +65,17 @@ export const Home = () => {
     <main className="home">
       <div className="bg-circle bg-circle-1"></div>
       <div className="bg-circle bg-circle-2"></div>
-
+      <button className="generate-btn active logout" onClick={handleLogout}>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          width="20"
+          height="20"
+          fill="currentColor"
+        >
+          <path d="M4 18H6V20H18V4H6V6H4V3C4 2.44772 4.44772 2 5 2H19C19.5523 2 20 2.44772 20 3V21C20 21.5523 19.5523 22 19 22H5C4.44772 22 4 21.5523 4 21V18ZM6 11H13V13H6V16L1 12L6 8V11Z"></path>
+        </svg>
+      </button>
       <div className="home-container">
         <section className="hero">
           <p className="badge">Personalized interview prep</p>
@@ -53,8 +83,9 @@ export const Home = () => {
             Turn any job post into a <span>focused interview plan</span>
           </h1>
           <p>
-            Upload your resume, add a quick profile summary, and get a clean dashboard
-            with match score, likely questions, skill gaps, and a day-by-day roadmap.
+            Upload your resume, add a quick profile summary, and get a clean
+            dashboard with match score, likely questions, skill gaps, and a
+            day-by-day roadmap.
           </p>
         </section>
 
@@ -88,7 +119,9 @@ Requirements
 • Team Collaboration`}
             />
 
-            <div className="character-count">{jobDescription.length} characters</div>
+            <div className="character-count">
+              {jobDescription.length} characters
+            </div>
           </div>
 
           <div className="right-panel">
@@ -148,19 +181,24 @@ Requirements
             <div className="info-box">
               <span>i</span>
               <p>
-                Either <strong>Resume</strong> or <strong>Self Description</strong> is
-                required for generating your personalized interview report.
+                Either <strong>Resume</strong> or{' '}
+                <strong>Self Description</strong> is required for generating
+                your personalized interview report.
               </p>
             </div>
 
-            {activeError ? <p className="panel-message error">{activeError}</p> : null}
+            {activeError ? (
+              <p className="panel-message error">{activeError}</p>
+            ) : null}
 
             <button
               onClick={handleGenerateReport}
               className="generate-btn"
               disabled={loading}
             >
-              {loading ? 'Generating report...' : 'Generate AI Interview Report'}
+              {loading
+                ? 'Generating report . . . . .'
+                : 'Generate AI Interview Report'}
             </button>
           </div>
         </section>

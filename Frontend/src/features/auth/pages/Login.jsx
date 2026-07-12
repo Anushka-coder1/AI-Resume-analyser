@@ -67,7 +67,7 @@ export const Login = () => {
 
           {error ? <p className="form-message error">{error}</p> : null}
 
-          <button className="button primary-button" type="submit">
+          <button className="button primary-button generate-btn" type="submit">
             Login
           </button>
         </form>

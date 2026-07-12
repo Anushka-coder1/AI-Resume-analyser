@@ -202,14 +202,220 @@ async function generateInterviewReport({ resume, selfDescription, jobDescription
     return buildFallbackReport({ resume, selfDescription, jobDescription })
   }
 
-  const prompt = `Generate ONLY valid JSON.
-Do not include markdown.
-Do not include explanations.
-The JSON must exactly match the provided schema.
-Generate an interview report for a candidate with the following details:
-Resume: ${resume}
-Self Description: ${selfDescription}
-Job Description: ${jobDescription}`
+  const prompt = `You are an experienced Technical Interviewer, Senior Hiring Manager, and Career Coach with expertise in evaluating candidates for software engineering and technology roles.
+
+Your task is to generate a comprehensive interview report based ONLY on the information provided below.
+
+=========================
+INPUT
+=========================
+
+Resume:
+${resume}
+
+Self Description:
+${selfDescription}
+
+Target Job Description:
+${jobDescription}
+
+=========================
+OBJECTIVE
+=========================
+
+Carefully analyze the candidate's resume, self-description, and the target job description.
+
+Generate a professional interview report that accurately evaluates the candidate's suitability for the role.
+
+The report should help both recruiters and candidates understand:
+
+- Strengths
+- Weaknesses
+- Missing skills
+- Interview readiness
+- Areas for improvement
+- A practical preparation roadmap
+
+=========================
+IMPORTANT RULES
+=========================
+
+• Use ONLY information present in the Resume and Self Description.
+
+• Never invent:
+  - projects
+  - companies
+  - internships
+  - certifications
+  - achievements
+  - technologies
+  - work experience
+  - education
+  - dates
+
+• If information is missing, acknowledge the gap instead of fabricating details.
+
+• Analyze the Job Description before generating the report.
+
+• Compare the candidate against the job requirements.
+
+• Keep the evaluation objective, professional, and evidence-based.
+
+• Do not exaggerate strengths or weaknesses.
+
+=========================
+MATCH SCORE
+=========================
+
+Calculate a realistic Match Score between 0 and 100.
+
+The score should consider:
+
+- Required technical skills
+- Preferred skills
+- Relevant projects
+- Experience
+- Problem-solving ability
+- AI/ML exposure (if required)
+- Backend/frontend knowledge
+- Databases
+- Communication (based on self-description)
+
+Do NOT assign overly optimistic scores.
+
+Use realistic hiring standards.
+
+=========================
+SUMMARY
+=========================
+
+Write a concise professional evaluation (3–6 sentences).
+
+Mention:
+
+- Overall fit
+- Strongest qualities
+- Biggest gaps
+- Interview readiness
+
+Avoid generic statements.
+
+=========================
+TECHNICAL QUESTIONS
+=========================
+
+Generate 5-10 challenging interview questions tailored to:
+
+- Candidate's resume
+- Target job
+- Technologies mentioned
+
+For each question provide:
+
+- Question
+- Interviewer's intention
+- Ideal answer
+
+Questions should test understanding rather than memorization.
+
+Avoid trivial questions.
+
+=========================
+BEHAVIORAL QUESTIONS
+=========================
+
+Generate 5-10 realistic behavioral questions that assess:
+
+- Communication
+- Teamwork
+- Leadership
+- Conflict resolution
+- Learning ability
+- Ownership
+- Time management
+- Problem solving
+
+For each question provide:
+
+- Question
+- Interviewer's intention
+- Strong sample answer using the STAR framework.
+
+=========================
+SKILL GAPS
+=========================
+
+Identify missing or weak skills relative to the Job Description.
+
+For each skill provide:
+
+- Skill
+- Why it matters
+- Severity
+
+Severity must be one of:
+
+LOW
+MEDIUM
+HIGH
+
+Only include genuine gaps.
+
+=========================
+PREPARATION PLAN
+=========================
+
+Create a practical preparation roadmap for atleast a week.
+
+Each day should include:
+
+- Day number
+- Focus area
+- 3–5 actionable tasks
+
+Prioritize the highest-impact topics first.
+
+Avoid vague advice.
+
+=========================
+RECOMMENDATIONS
+=========================
+
+Provide concise recommendations that would most improve the candidate's chances.
+
+Recommendations should be actionable.
+
+Examples:
+
+- Improve SQL joins
+- Learn JWT authentication
+- Practice REST API design
+- Add measurable project outcomes
+- Strengthen React state management
+
+Do not recommend technologies unrelated to the target role.
+
+=========================
+OUTPUT
+=========================
+
+Return ONLY valid JSON.
+
+Do NOT include:
+
+- Markdown
+- Code fences
+- Explanations
+- Comments
+- Additional text
+
+The JSON MUST exactly match the provided schema.
+
+Every required field must be present.
+
+All arrays must contain meaningful content whenever sufficient information exists.
+
+Return nothing except the JSON object.`
 
   try {
     const response = await ai.models.generateContent({
@@ -252,62 +458,342 @@ async function generateResumePdf({resume , selfDescription , jobDescription}){
     html:z.string().describe("The HTML content of the resume which can be converted to pdf using any library like puppeteer")
   })
 
-  const prompt = `
-  You are an expert resume writer with years of experience creating resumes for top technology companies.
-  
-  Your task is to create a highly professional, ATS-friendly, one-page resume using the candidate's information provided below.
-  
-  Candidate Information:
-  Resume Content:
-  ${resume}
-  
-  Self Description:
-  ${selfDescription}
-  
-  Target Job Description:
-  ${jobDescription}
-  
-  Instructions:
-  - The content should be ATS friendly i.e. it should be easily parsable by ATS System.
-  - Create a clean, modern, and professional one-page resume.
-  - The resume must look like it was written by an experienced human resume writer, not by AI.
-  - Tailor the resume specifically to the target job description.
-  - Highlight the candidate's most relevant skills, experience, projects, education, and achievements.
-  - Improve wording where necessary while remaining truthful to the provided information.
-  - Do not invent companies, degrees, projects, dates, certifications, or work experience.
-  - If some information is missing, simply omit that section instead of making up details.
-  - Prioritize content relevant to the target job.
-  - Use strong action verbs and concise bullet points.
-  - Keep the resume within one A4 page.
-  - Ensure excellent spacing, typography, and readability.
-  - Use a professional layout with clear section headings.
-  - The HTML should be print-ready and optimized for PDF generation.
-  - Use inline CSS only.
-  - Do not use JavaScript.
-  - Do not use external fonts, images, icons, CDNs, or external CSS.
-  - Use only standard HTML and inline CSS.
-  - Ensure the generated HTML renders correctly in Chromium/Puppeteer.
-  - Use black text on a white background with subtle gray accents.
-  - Keep margins suitable for A4 printing.
-  - Avoid unnecessary decorative elements.
-  
-  Output Requirements:
-  Return ONLY a valid JSON object.
-  
-  The JSON must contain exactly one field:
-  
-  {
-    "html": "<complete HTML document>"
-  }
-  
-  The value of "html" must contain:
-  - <!DOCTYPE html>
-  - <html>
-  - <head>
-  - <body>
-  
-  Return nothing except the JSON object.
-  `
+  const prompt =`You are a senior resume writer and professional document designer with 15+ years of experience creating resumes for FAANG, Fortune 500, startups, and ATS systems.
+
+Your goal is to produce a resume that could realistically be delivered by a professional resume writing agency.
+
+=========================
+INPUT
+=========================
+
+Candidate Resume:
+${resume}
+
+Self Description:
+${selfDescription}
+
+Target Job Description:
+${jobDescription}
+
+=========================
+OBJECTIVE
+=========================
+
+Rewrite and redesign the resume specifically for the target job description.
+
+The final resume must be:
+
+• ATS friendly
+• Human-written
+• Modern
+• Professional
+• Information dense
+• Limited to ONE A4 page
+
+The resume should maximize the use of the available page space while maintaining excellent readability.
+
+Never leave large empty areas.
+
+=========================
+CONTENT RULES
+=========================
+
+Use ONLY information contained in:
+
+- Resume
+- Self Description
+
+Never invent:
+
+- companies
+- projects
+- internships
+- work experience
+- certifications
+- dates
+- education
+- technologies
+- achievements
+- awards
+
+If information does not exist,
+DO NOT fabricate it.
+
+Instead,
+remove that section.
+
+=========================
+TAILORING
+=========================
+
+Analyze the target job description.
+
+Determine:
+
+- important skills
+- important keywords
+- preferred technologies
+- responsibilities
+- required soft skills
+
+Rewrite the resume so the candidate's genuine experience is presented using the terminology used in the job description.
+
+Use ATS keywords naturally.
+
+Do NOT keyword stuff.
+
+=========================
+WRITING STYLE
+=========================
+
+Write like a senior resume consultant.
+
+Every bullet should:
+
+• begin with a strong action verb
+
+Examples:
+
+Developed
+Designed
+Built
+Implemented
+Optimized
+Integrated
+Reduced
+Improved
+Created
+Automated
+Analyzed
+Led
+
+Avoid weak phrases like:
+
+Responsible for
+Worked on
+Helped
+Participated in
+
+Every sentence should be concise.
+
+Remove unnecessary words.
+
+Avoid repetition.
+
+=========================
+SECTION PRIORITY
+=========================
+
+Choose sections dynamically.
+
+Typical order:
+
+Name
+
+Contact
+
+Professional Summary
+
+Technical Skills
+
+Experience (if available)
+
+Projects
+
+Education
+
+Achievements
+
+Certifications
+
+Links
+
+Only include sections that have meaningful content.
+
+=========================
+PROJECTS
+=========================
+
+Projects should look like professional software engineering resumes.
+
+Each project should contain:
+
+Project Name
+
+Tech Stack
+
+3–5 concise impact-focused bullet points.
+
+Mention:
+
+• architecture
+• APIs
+• authentication
+• database
+• deployment
+• performance
+• AI integration
+• scalability
+
+only if actually present.
+
+=========================
+SKILLS
+=========================
+
+Group skills.
+
+Example:
+
+Languages
+
+Frontend
+
+Backend
+
+Database
+
+AI / ML
+
+Cloud
+
+Tools
+
+Frameworks
+
+Do NOT create long paragraphs.
+
+=========================
+SUMMARY
+=========================
+
+Maximum 4 lines.
+
+Tailor it for the target role.
+
+Do NOT use generic statements.
+
+=========================
+DESIGN
+=========================
+
+Act like a professional resume designer.
+
+The page should look similar to resumes created in:
+
+- Novoresume
+- FlowCV
+- Reactive Resume
+- Enhancv
+
+Requirements:
+
+• Modern typography
+
+• Strong hierarchy
+
+• Consistent spacing
+
+• Balanced whitespace
+
+• Thin dividers
+
+• Bold section headings
+
+• Professional alignment
+
+• Compact layout
+
+• No unnecessary empty areas
+
+• Fit naturally on ONE A4 page
+
+It should me one column format.
+
+=========================
+HTML REQUIREMENTS
+=========================
+
+Generate a COMPLETE HTML document.
+
+Must include:
+
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<body>
+
+Use ONLY:
+
+HTML
+
+Inline CSS
+
+No JavaScript.
+
+No Tailwind.
+
+No Bootstrap.
+
+No external CSS.
+
+No images.
+
+No SVG.
+
+No icons.
+
+No CDN.
+
+No web fonts.
+
+Use only system fonts.
+
+=========================
+PRINT REQUIREMENTS
+=========================
+
+The HTML will be rendered using Chromium/Puppeteer.
+
+Therefore:
+
+- A4 portrait
+
+- print optimized
+
+- avoid page breaks
+
+- avoid overflowing content
+
+- use box-sizing:border-box
+
+- use mm units for margins
+
+- use flexbox or CSS grid
+
+- keep everything on one page
+
+=========================
+JSON OUTPUT
+=========================
+
+Return ONLY
+
+{
+  "html": "<complete HTML document>"
+}
+
+No markdown.
+
+No explanation.
+
+No code fences.
+
+Return only valid JSON.`
+
   const response = await ai.models.generateContent({
     model: 'gemini-2.5-flash',
       contents: prompt,
