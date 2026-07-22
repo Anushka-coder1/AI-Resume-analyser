@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'https://ai-resume-analyser-4dc1.onrender.com',
+  baseURL: import.meta.env.BACKEND_URL,
   withCredentials: true,
 })
 
