@@ -193,6 +193,30 @@ function buildFallbackReport({ resume, selfDescription, jobDescription }) {
           'Refine answers to stay concise, specific, and evidence-based.',
         ],
       },
+      {
+        day: 5,
+        focus: 'Mock interview practice',
+        task: [
+          'Answer the technical and behavioral questions aloud.',
+          'Refine answers to stay concise, specific, and evidence-based.',
+        ],
+      },
+      {
+        day: 6,
+        focus: 'Mock interview practice',
+        task: [
+          'Answer the technical and behavioral questions aloud.',
+          'Refine answers to stay concise, specific, and evidence-based.',
+        ],
+      },
+      {
+        day: 7,
+        focus: 'Mock interview practice',
+        task: [
+          'Answer the technical and behavioral questions aloud.',
+          'Refine answers to stay concise, specific, and evidence-based.',
+        ],
+      },
     ],
   }
 }
