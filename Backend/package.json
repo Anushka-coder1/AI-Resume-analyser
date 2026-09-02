@@ -7,6 +7,9 @@
     "test": "jest",
     "dev": "npx nodemon server.js"
   },
+  "jest": {
+    "setupFilesAfterEnv": ["<rootDir>/test/setup.js"]
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Anushka-coder1/AI-Resume-analyser.git"
