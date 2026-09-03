@@ -38,7 +38,8 @@ export const Register = () => {
         <p className="eyebrow">AI Resume Analyser</p>
         <h1>Create your account</h1>
         <p className="auth-subtitle">
-          Save reports, compare roles, and build a focused prep plan for every application.
+          Save reports, compare roles, and build a focused prep plan for every
+          application.
         </p>
 
         <form onSubmit={handleSubmit}>
@@ -84,7 +85,15 @@ export const Register = () => {
             Register
           </button>
         </form>
-
+        <button
+          type="button"
+          className="button primary-button generate-btn"
+          onClick={() => {
+            window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google`
+          }}
+        >
+          Continue with Google
+        </button>
         <p className="auth-switch">
           Already have an account? <Link to="/login">Login</Link>
         </p>

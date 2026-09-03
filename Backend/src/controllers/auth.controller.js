@@ -5,9 +5,9 @@ const tokenBlacklistModel = require('../models/blacklist.model')
 
 const cookieOptions = {
   httpOnly: true,
-  sameSite: 'none',
-  secure: true,
-  maxAge: 24 * 60 * 60 * 1000,
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000,
 }
 
 async function registerUserController(req, res) {
@@ -129,9 +129,29 @@ async function getMeController(req, res) {
   })
 }
 
+async function googleCallbackController(req, res) {
+    const user = req.user;
+
+    const token = jwt.sign(
+        {
+            id: user._id,
+            username: user.username
+        },
+        process.env.JWT_SECRET,
+        {
+            expiresIn: '1d'
+        }
+    );
+
+    res.cookie('token', token, cookieOptions);
+
+    res.redirect(process.env.FRONTEND_URL);
+}
+
 module.exports = {
   registerUserController,
   loginUserController,
   logoutUserController,
   getMeController,
+  googleCallbackController
 }

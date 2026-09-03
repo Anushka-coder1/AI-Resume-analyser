@@ -37,7 +37,8 @@ export const Login = () => {
         <p className="eyebrow">AI Resume Analyser</p>
         <h1>Welcome back</h1>
         <p className="auth-subtitle">
-          Sign in to generate interview reports and revisit your preparation plans.
+          Sign in to generate interview reports and revisit your preparation
+          plans.
         </p>
 
         <form onSubmit={handleSubmit}>
@@ -71,6 +72,16 @@ export const Login = () => {
             Login
           </button>
         </form>
+
+        <button
+          type="button"
+          className="button primary-button generate-btn"
+          onClick={() => {
+            window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google`
+          }}
+        >
+          Continue with Google
+        </button>
 
         <p className="auth-switch">
           Don&apos;t have an account? <Link to="/register">Register</Link>

@@ -1,6 +1,7 @@
 const {Router} = require('express');
 const authController = require('../controllers/auth.controller');
 const authMiddleware = require('../middlewares/auth.middleware')
+const passport = require('passport');
 
 const authRouter = Router()
 
@@ -31,5 +32,15 @@ authRouter.get('/logout', authController.logoutUserController);
  * @access Private
  */
 authRouter.get("/get-me" ,authMiddleware.authUser, authController.getMeController)
+
+authRouter.get('/google', passport.authenticate('google', {
+  scope: ['profile', 'email'],
+}));
+
+authRouter.get(
+  '/google/callback',
+  passport.authenticate('google', { session: false, failureRedirect: '/login' }),
+  authController.googleCallbackController
+);
 
 module.exports = authRouter;

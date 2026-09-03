@@ -49,6 +49,21 @@ $shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
   bottom: -170px;
 }
 
+.community-link {
+  position: absolute;
+  z-index: 4;
+  top: 24px;
+  right: 86px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  background: rgba(17, 29, 40, 0.84);
+  color: $text;
+  cursor: pointer;
+}
+
+.community-link:hover { border-color: $primary-light; color: $primary-light; }
+
 .hero {
   text-align: center;
   margin-bottom: 45px;
@@ -505,4 +520,6 @@ input[type='file'] {
   .history-grid {
     grid-template-columns: 1fr;
   }
+
+  .community-link { top: 20px; right: 76px; font-size: .78rem; }
 }
