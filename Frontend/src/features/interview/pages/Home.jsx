@@ -2,11 +2,10 @@ import '../style/home.scss'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useInterview } from '../hooks/useInterview'
-import axios from 'axios'
 import { useAuth } from '../../auth/hooks/useAuth'
 
 export const Home = () => {
-  const { loading, error, reports, generateReport, getReports } = useInterview()
+  const { loading, error, reports, nextReportCursor, generateReport, getReports } = useInterview()
   const [jobDescription, setJobDescription] = useState('')
   const [selfDescription, setSelfDescription] = useState('')
   const [localError, setLocalError] = useState('')
@@ -62,6 +61,10 @@ export const Home = () => {
   }
 
   const activeError = localError || error
+
+  const loadMoreReports = () => {
+    if (nextReportCursor) getReports({ cursor: nextReportCursor }).catch(() => {})
+  }
 
   return (
     <main className="home">
@@ -206,6 +209,7 @@ Requirements
                 : 'Generate AI Interview Report'}
             </button>
           </div>
+          {nextReportCursor ? <button type="button" className="load-more" onClick={loadMoreReports} disabled={loading}>Load more reports</button> : null}
         </section>
 
         <section className="history-panel">

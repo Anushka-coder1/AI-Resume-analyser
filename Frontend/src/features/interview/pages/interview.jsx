@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import '../style/interview.scss'
 import { useInterview } from '../hooks/useInterview'
-import axios from 'axios'
 import { useAuth } from '../../auth/hooks/useAuth'
 
 export const Interview = () => {
@@ -23,6 +22,7 @@ export const Interview = () => {
   const technical = report?.technicalQuestions ?? []
   const behavioral = report?.behavioralQuestions ?? []
   const skillGaps = report?.skillGaps ?? []
+  const requirements = report?.requirementEvidence ?? []
   const roadmap = report?.preparationPlan ?? []
 
   const currentTechnical = technical[selectedIndex]
@@ -310,6 +310,7 @@ export const Interview = () => {
           <aside className="skill-panel">
             <div>
               <h3>Skill Gaps</h3>
+              <p className="score-explanation">Score uses weighted, evidence-based skill coverage.</p>
               <div className="skills">
                 {skillGaps.length ? (
                   skillGaps.map((skill, index) => (
@@ -329,6 +330,7 @@ export const Interview = () => {
                 )}
               </div>
             </div>
+            {requirements.length ? <div className="evidence-list"><h3>Match evidence</h3>{requirements.map((requirement) => <div className="evidence-card" key={requirement.skill}><strong>{requirement.skill}</strong><small>{requirement.matched ? 'Found in profile' : 'Not found in profile'} · weight {requirement.weight}</small><p>{requirement.candidateEvidence || requirement.jobEvidence}</p></div>)}</div> : null}
           </aside>
         </div>
       </div>

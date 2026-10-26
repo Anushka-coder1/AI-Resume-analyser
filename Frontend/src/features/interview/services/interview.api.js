@@ -32,8 +32,10 @@ export const getInterviewReportById = async ({ interviewId }) => {
   return response.data
 }
 
-export const getAllInterviewReport = async () => {
-  const response = await api.get('/api/interview')
+export const getAllInterviewReport = async ({ cursor } = {}) => {
+  const response = await api.get('/api/interview', {
+    params: { limit: 10, ...(cursor ? { cursor } : {}) },
+  })
   return response.data
 }
 

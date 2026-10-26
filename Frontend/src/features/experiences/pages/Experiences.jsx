@@ -9,11 +9,16 @@ export const Experiences = () => {
   const [form, setForm] = useState({ company: '', role: '', experience: '' })
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [nextCursor, setNextCursor] = useState(null)
   const [message, setMessage] = useState('')
 
   useEffect(() => {
     getExperiences()
-      .then((data) => setPosts(data.interviewExperiences || []))
+      .then((data) => {
+        setPosts(data.interviewExperiences || [])
+        setNextCursor(data.pageInfo?.nextCursor || null)
+      })
       .catch(() => setMessage('Unable to load community experiences right now.'))
       .finally(() => setLoading(false))
   }, [])
@@ -42,6 +47,20 @@ export const Experiences = () => {
       setMessage(error.response?.data?.message || 'Unable to share your experience. Please try again.')
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const loadMore = async () => {
+    if (!nextCursor || loadingMore) return
+    setLoadingMore(true)
+    try {
+      const data = await getExperiences({ cursor: nextCursor })
+      setPosts((current) => [...current, ...(data.interviewExperiences || [])])
+      setNextCursor(data.pageInfo?.nextCursor || null)
+    } catch {
+      setMessage('Unable to load more community experiences right now.')
+    } finally {
+      setLoadingMore(false)
     }
   }
 
@@ -88,12 +107,15 @@ export const Experiences = () => {
           <section className="feed-section">
             <div className="feed-heading"><div><p className="community-eyebrow">Community feed</p><h2>Recent experiences</h2></div><span>{posts.length} shared</span></div>
             {loading ? <p className="feed-status">Loading experiences...</p> : posts.length ? (
-              <div className="post-list">
-                {posts.map((post) => <article className="experience-post" key={post._id}>
-                  <div className="post-topline"><div className="company-mark">{post.company.charAt(0).toUpperCase()}</div><div><h3>{post.company}</h3><p>{post.role} · shared by {post.user?.username || 'Community member'}</p></div><time>{new Date(post.createdAt).toLocaleDateString()}</time></div>
-                  <p className="post-copy">{post.experience}</p>
-                </article>)}
-              </div>
+              <>
+                <div className="post-list">
+                  {posts.map((post) => <article className="experience-post" key={post._id}>
+                    <div className="post-topline"><div className="company-mark">{post.company.charAt(0).toUpperCase()}</div><div><h3>{post.company}</h3><p>{post.role} · shared by {post.user?.username || 'Community member'}</p></div><time>{new Date(post.createdAt).toLocaleDateString()}</time></div>
+                    <p className="post-copy">{post.experience}</p>
+                  </article>)}
+                </div>
+                {nextCursor ? <button type="button" className="load-more" onClick={loadMore} disabled={loadingMore}>{loadingMore ? 'Loading...' : 'Load more'}</button> : null}
+              </>
             ) : <div className="feed-empty"><h3>Be the first to share</h3><p>A helpful interview story can make a real difference for the next candidate.</p></div>}
           </section>
         </div>

@@ -29,4 +29,6 @@ const experienceSchema = new mongoose.Schema(
   { timestamps: true },
 )
 
+experienceSchema.index({ createdAt: -1, _id: -1 })
+
 module.exports = mongoose.model('InterviewExperience', experienceSchema)

@@ -64,6 +64,15 @@ const preparationPlanSchema =  new mongoose.Schema({
   }]
 })
 
+const requirementEvidenceSchema = new mongoose.Schema({
+  skill: { type: String, required: true },
+  required: { type: Boolean, required: true },
+  weight: { type: Number, required: true },
+  matched: { type: Boolean, required: true },
+  jobEvidence: { type: String, required: true },
+  candidateEvidence: { type: String, default: null },
+}, { _id: false })
+
 const interviewReportSchema = new mongoose.Schema({
   jobDescription : {
     type:String,
@@ -80,6 +89,8 @@ const interviewReportSchema = new mongoose.Schema({
     min : 0,
     max : 100
   },
+  scoringMethod: { type: String, default: 'weighted_skill_coverage_v1' },
+  requirementEvidence: [requirementEvidenceSchema],
   technicalQuestions : [technicalQuestionSchema],
   behavioralQuestions : [behavioralQuestionSchema],
   skillGaps : [skillGapSchema],
@@ -95,6 +106,8 @@ const interviewReportSchema = new mongoose.Schema({
 },{
   timestamps:true
 })
+
+interviewReportSchema.index({ user: 1, createdAt: -1, _id: -1 })
 
 const interviewReportModel = mongoose.model("InterviewReport",interviewReportSchema)
 

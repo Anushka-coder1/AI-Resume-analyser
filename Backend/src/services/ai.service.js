@@ -9,11 +9,6 @@ const ai = process.env.GOOGLE_GENAI_API_KEY
   : null
 
 const interviewReportSchema = z.object({
-  matchScore: z
-    .number()
-    .describe(
-      "A score between 0 and 100 indicating how well the candidate's profile matches the job description"
-    ),
   technicalQuestions: z
     .array(
       z.object({
@@ -44,16 +39,6 @@ const interviewReportSchema = z.object({
       })
     )
     .describe('Behavioral questions that can be asked in the interview'),
-  skillGaps: z
-    .array(
-      z.object({
-        skill: z.string().describe('The skill which the candidate is lacking'),
-        severity: z
-          .enum(['low', 'medium', 'high'])
-          .describe('The severity of the skill gap'),
-      })
-    )
-    .describe("List of skill gaps in the candidate's profile"),
   preparationPlan: z
     .array(
       z.object({
@@ -79,43 +64,9 @@ function pickTitle(jobDescription) {
   return firstLine || 'Target Role'
 }
 
-function buildFallbackReport({ resume, selfDescription, jobDescription }) {
-  const combinedProfile = `${resume} ${selfDescription}`.toLowerCase()
-  const normalizedJobDescription = jobDescription.toLowerCase()
-  const targetSkills = [
-    'javascript',
-    'typescript',
-    'react',
-    'node',
-    'express',
-    'mongodb',
-    'sql',
-    'docker',
-    'aws',
-    'system design',
-    'rest api',
-    'git',
-  ]
-
-  const matchedSkills = targetSkills.filter(
-    (skill) =>
-      combinedProfile.includes(skill) && normalizedJobDescription.includes(skill)
-  )
-
-  const missingSkills = targetSkills.filter(
-    (skill) =>
-      normalizedJobDescription.includes(skill) && !combinedProfile.includes(skill)
-  )
-
-  const denominator = Math.max(1, matchedSkills.length + missingSkills.length)
-  const matchScore = Math.max(
-    45,
-    Math.min(95, Math.round((matchedSkills.length / denominator) * 100))
-  )
-
+function buildFallbackReport({ jobDescription }) {
   return {
     title: pickTitle(jobDescription),
-    matchScore,
     technicalQuestions: [
       {
         question: 'Walk me through a project that is closest to this role.',
@@ -156,10 +107,6 @@ function buildFallbackReport({ resume, selfDescription, jobDescription }) {
           'Explain how you clarify impact, align on priorities, communicate risks early, and keep stakeholders informed.',
       },
     ],
-    skillGaps: missingSkills.slice(0, 4).map((skill) => ({
-      skill,
-      severity: missingSkills.length > 2 ? 'high' : 'medium',
-    })),
     preparationPlan: [
       {
         day: 1,
@@ -221,9 +168,9 @@ function buildFallbackReport({ resume, selfDescription, jobDescription }) {
   }
 }
 
-async function generateInterviewReport({ resume, selfDescription, jobDescription }) {
+async function generateInterviewReport({ resume, selfDescription, jobDescription, matching }) {
   if (!ai) {
-    return buildFallbackReport({ resume, selfDescription, jobDescription })
+    return { ...buildFallbackReport({ jobDescription }), ...matching }
   }
 
   const prompt = `You are an experienced Technical Interviewer, Senior Hiring Manager, and Career Coach with expertise in evaluating candidates for software engineering and technology roles.
@@ -291,23 +238,10 @@ IMPORTANT RULES
 MATCH SCORE
 =========================
 
-Calculate a realistic Match Score between 0 and 100.
+The application calculates the match score and skill gaps deterministically.
+Do not return a match score or skill-gap list. Use the evidence below only to prioritize interview questions and the preparation plan:
 
-The score should consider:
-
-- Required technical skills
-- Preferred skills
-- Relevant projects
-- Experience
-- Problem-solving ability
-- AI/ML exposure (if required)
-- Backend/frontend knowledge
-- Databases
-- Communication (based on self-description)
-
-Do NOT assign overly optimistic scores.
-
-Use realistic hiring standards.
+${JSON.stringify(matching.requirements)}
 
 =========================
 SUMMARY
@@ -369,21 +303,7 @@ For each question provide:
 SKILL GAPS
 =========================
 
-Identify missing or weak skills relative to the Job Description.
-
-For each skill provide:
-
-- Skill
-- Why it matters
-- Severity
-
-Severity must be one of:
-
-LOW
-MEDIUM
-HIGH
-
-Only include genuine gaps.
+Do not return skill gaps. Missing skills are computed by the application from the evidence above.
 
 =========================
 PREPARATION PLAN
@@ -451,14 +371,14 @@ Return nothing except the JSON object.`
       },
     })
 
-    return JSON.parse(response.text)
+    return { ...JSON.parse(response.text), ...matching }
   } catch (error) {
     console.error('Gemini API Error:', error)
-    return buildFallbackReport({ resume, selfDescription, jobDescription })
+    return { ...buildFallbackReport({ jobDescription }), ...matching }
   }
 }
 
-async function generatePdfFromHtml(htmlContent) {
+async function generateLegacyPdfFromHtml(htmlContent) {
   const browser = await puppeteer.launch({ headless: false });
 
   const page = await browser.newPage();
@@ -477,7 +397,7 @@ async function generatePdfFromHtml(htmlContent) {
   return pdfBuffer;
 }
 
-async function generateResumePdf({resume , selfDescription , jobDescription}){
+async function generateLegacyResumePdf({resume , selfDescription , jobDescription}){
   const resumepdfSchema = z.object({
     html:z.string().describe("The HTML content of the resume which can be converted to pdf using any library like puppeteer")
   })
@@ -830,7 +750,7 @@ Return only valid JSON.`
 
   // console.log(jsonContent)
 
-  const pdfBuffer = await generatePdfFromHtml(jsonContent.html)
+  const pdfBuffer = await generateLegacyPdfFromHtml(jsonContent.html)
 
 //   console.log("PDF Buffer:", pdfBuffer);
 // console.log("Buffer Length:", pdfBuffer?.length);
@@ -838,4 +758,75 @@ Return only valid JSON.`
   return pdfBuffer
 }
 
-module.exports = {generateInterviewReport , generateResumePdf}
+function escapeHtml(value = '') {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+function buildResumeHtml(data) {
+  const skills = (data.skills || []).map(escapeHtml).join(' · ')
+  const sections = (data.sections || []).map((section) => `
+    <section>
+      <h2>${escapeHtml(section.heading)}</h2>
+      ${section.items.map((item) => `<div class="item"><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.subtitle || '')}</p><ul>${item.bullets.map((bullet) => `<li>${escapeHtml(bullet)}</li>`).join('')}</ul></div>`).join('')}
+    </section>`).join('')
+
+  return `<!doctype html><html><head><meta charset="utf-8"><style>
+    @page { size: A4; margin: 12mm; } * { box-sizing: border-box; }
+    body { color:#172033; font-family:Arial, Helvetica, sans-serif; font-size:9.5pt; line-height:1.35; margin:0; }
+    header { border-bottom:2px solid #1f4b7a; padding-bottom:8px; margin-bottom:9px; }
+    h1 { font-size:22pt; margin:0 0 3px; } .contact { color:#44546a; margin:0; }
+    .summary { margin:8px 0 0; } h2 { color:#1f4b7a; border-bottom:1px solid #cbd5e1; font-size:11pt; letter-spacing:.04em; margin:10px 0 5px; padding-bottom:2px; text-transform:uppercase; }
+    h3 { font-size:10pt; margin:5px 0 1px; } p { margin:1px 0; } ul { margin:3px 0 6px; padding-left:17px; } li { margin:1px 0; }.skills { margin:0; }
+  </style></head><body><header><h1>${escapeHtml(data.name || 'Candidate')}</h1><p class="contact">${escapeHtml(data.contact || '')}</p>${data.summary ? `<p class="summary">${escapeHtml(data.summary)}</p>` : ''}</header>${skills ? `<section><h2>Skills</h2><p class="skills">${skills}</p></section>` : ''}${sections}</body></html>`
+}
+
+async function renderResumePdf(htmlContent) {
+  const browser = await puppeteer.launch({ headless: true })
+  try {
+    const page = await browser.newPage()
+    await page.setContent(htmlContent, { waitUntil: 'load' })
+    return await page.pdf({ format: 'A4', printBackground: true })
+  } finally {
+    await browser.close()
+  }
+}
+
+const resumeContentSchema = z.object({
+  name: z.string(),
+  contact: z.string(),
+  summary: z.string(),
+  skills: z.array(z.string()).max(24),
+  sections: z.array(z.object({
+    heading: z.string(),
+    items: z.array(z.object({
+      title: z.string(),
+      subtitle: z.string(),
+      bullets: z.array(z.string()).max(5),
+    })).max(5),
+  })).max(5),
+})
+
+async function generateResumePdf({ resume, selfDescription, jobDescription }) {
+  let content = {
+    name: 'Candidate', contact: '', summary: selfDescription || '', skills: [],
+    sections: [{ heading: 'Resume', items: [{ title: '', subtitle: '', bullets: [resume || selfDescription || 'No resume information provided.'] }] }],
+  }
+
+  if (ai) {
+    const prompt = `Rewrite only the factual content in this resume for the target role. Never invent facts. Return JSON matching the schema: name, contact, summary, skills, and sections. Sections can be Experience, Projects, Education, or Certifications. Keep content concise enough for one A4 page.\n\nResume:\n${resume}\n\nSelf description:\n${selfDescription}\n\nTarget job description:\n${jobDescription}`
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash', contents: prompt,
+      config: { responseMimeType: 'application/json', responseJsonSchema: toJSONSchema(resumeContentSchema) },
+    })
+    content = resumeContentSchema.parse(JSON.parse(response.text))
+  }
+
+  return renderResumePdf(buildResumeHtml(content))
+}
+
+module.exports = { generateInterviewReport, generateResumePdf }

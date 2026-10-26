@@ -19,6 +19,8 @@ export const useInterview = () => {
     setReport,
     reports,
     setReports,
+    nextReportCursor,
+    setNextReportCursor,
     loading,
     setLoading,
     error,
@@ -73,13 +75,14 @@ export const useInterview = () => {
     [setError, setLoading, setReport]
   )
 
-  const getReports = useCallback(async () => {
+  const getReports = useCallback(async ({ cursor } = {}) => {
     setLoading(true)
     setError('')
 
     try {
-      const response = await getAllInterviewReport()
-      setReports(response.interviewReports)
+      const response = await getAllInterviewReport({ cursor })
+      setReports((current) => cursor ? [...current, ...response.interviewReports] : response.interviewReports)
+      setNextReportCursor(response.pageInfo?.nextCursor || null)
       return response.interviewReports
     } catch (error) {
       const message =
@@ -89,7 +92,7 @@ export const useInterview = () => {
     } finally {
       setLoading(false)
     }
-  }, [setError, setLoading, setReports])
+  }, [setError, setLoading, setReports, setNextReportCursor])
 
   const getResumePdf= async(interviewReportId)=>{
     setLoading(true)
@@ -108,5 +111,5 @@ export const useInterview = () => {
     }
   }
 
-  return { loading, error, report, reports, generateReport, getReportById, getReports ,getResumePdf}
+  return { loading, error, report, reports, nextReportCursor, generateReport, getReportById, getReports, getResumePdf}
 }

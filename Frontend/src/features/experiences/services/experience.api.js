@@ -5,8 +5,10 @@ const api = axios.create({
   withCredentials: true,
 })
 
-export const getExperiences = async () => {
-  const response = await api.get('/api/experiences')
+export const getExperiences = async ({ cursor } = {}) => {
+  const response = await api.get('/api/experiences', {
+    params: { limit: 10, ...(cursor ? { cursor } : {}) },
+  })
   return response.data
 }
 

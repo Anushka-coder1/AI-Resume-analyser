@@ -1,6 +1,25 @@
 const { PDFParse } = require('pdf-parse')
 const {generateInterviewReport , generateResumePdf} = require('../services/ai.service')
 const interviewReportModel = require('../models/interview.model')
+const { analyseSkillMatch } = require('../services/skill-matching.service')
+
+function parseCursor(cursor) {
+  if (!cursor) return null
+  try {
+    const value = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8'))
+    if (!value.createdAt || !value.id) throw new Error('Invalid cursor')
+    return { createdAt: new Date(value.createdAt), id: value.id }
+  } catch {
+    return null
+  }
+}
+
+function toCursor(document) {
+  return Buffer.from(JSON.stringify({
+    createdAt: document.createdAt.toISOString(),
+    id: document._id.toString(),
+  })).toString('base64url')
+}
 
 /**
  * @description Controller to generate interview report based on user self description , resume and job description
@@ -30,10 +49,22 @@ async function generateInterviewReportController(req, res) {
     await parser.destroy()
   }
 
+  const matching = analyseSkillMatch({
+    resume: resumeText,
+    selfDescription: selfDescription.trim(),
+    jobDescription: jobDescription.trim(),
+  })
+
   const interviewReportByAi = await generateInterviewReport({
     resume: resumeText,
     selfDescription: selfDescription.trim(),
     jobDescription: jobDescription.trim(),
+    matching: {
+      matchScore: matching.matchScore,
+      scoringMethod: matching.scoringMethod,
+      skillGaps: matching.skillGaps,
+      requirementEvidence: matching.requirements,
+    },
   })
 
   const interviewReport = await interviewReportModel.create({
@@ -79,16 +110,36 @@ async function getInterviewReportByIdController(req, res) {
  */
 
 async function getAllInterviewReportaController(req, res) {
-  const interviewReports = await interviewReportModel
-    .find({
-      user: req.user.id,
-    })
-    .sort({ createdAt: -1 })
+  const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 10, 1), 25)
+  const cursor = parseCursor(req.query.cursor)
+  if (req.query.cursor && !cursor) {
+    return res.status(400).json({ message: 'Invalid pagination cursor' })
+  }
+
+  const query = { user: req.user.id }
+  if (cursor) {
+    query.$or = [
+      { createdAt: { $lt: cursor.createdAt } },
+      { createdAt: cursor.createdAt, _id: { $lt: cursor.id } },
+    ]
+  }
+
+  const results = await interviewReportModel
+    .find(query)
+    .sort({ createdAt: -1, _id: -1 })
+    .limit(limit + 1)
     .select('title matchScore createdAt updatedAt')
+
+  const hasMore = results.length > limit
+  const interviewReports = hasMore ? results.slice(0, limit) : results
 
   res.status(200).json({
     message: 'Interview reports fetched successfully.',
     interviewReports,
+    pageInfo: {
+      hasMore,
+      nextCursor: hasMore ? toCursor(interviewReports[interviewReports.length - 1]) : null,
+    },
   })
 }
 
@@ -97,7 +148,10 @@ async function getAllInterviewReportaController(req, res) {
  */
 async function generateResumePdfController(req,res){
   const {interviewReportId} = req.params
-  const interviewReport = await interviewReportModel.findById(interviewReportId)
+  const interviewReport = await interviewReportModel.findOne({
+    _id: interviewReportId,
+    user: req.user.id,
+  })
 
   if(!interviewReport){
     return res.status(404).json({
