@@ -9,7 +9,7 @@ describe("GET /api/auth/logout", () => {
   test("should logout the user successfully", async () => {
 
     const response = await request(app)
-      .get("/api/auth/logout");
+      .post("/api/auth/logout");
 
     console.log("Status:", response.statusCode);
     console.log("Body:", response.body);

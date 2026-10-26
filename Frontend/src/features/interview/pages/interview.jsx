@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router'
 import '../style/interview.scss'
 import { useInterview } from '../hooks/useInterview'
 import axios from 'axios'
+import { useAuth } from '../../auth/hooks/useAuth'
 
 export const Interview = () => {
   const { interviewId } = useParams()
@@ -28,16 +29,17 @@ export const Interview = () => {
   const currentBehavioral = behavioral[selectedIndex]
   const currentRoadmap = roadmap[selectedIndex]
 
-  const handleLogout = async () => {
-    try {
-      await axios.post('/api/auth/logout', {}, { withCredentials: true })
-    } catch (err) {
-      console.log(err)
-    }
+  // const handleLogout = async () => {
+  //   try {
+  //     await axios.post('/api/auth/logout', {}, { withCredentials: true })
+  //   } catch (err) {
+  //     console.log(err)
+  //   }
 
-    localStorage.removeItem('token')
-    navigate('/login')
-  }
+  //   localStorage.removeItem('token')
+  //   navigate('/login')
+  // }
+  const { handleLogout } = useAuth()
 
   const nextItem = () => {
     if (activeTab === 'technical' && selectedIndex < technical.length - 1) {

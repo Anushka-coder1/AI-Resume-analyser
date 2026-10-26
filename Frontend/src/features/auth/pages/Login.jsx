@@ -72,7 +72,7 @@ export const Login = () => {
             Login
           </button>
         </form>
-
+        {/* <p className='italic center'>----or----</p> */}
         <button
           type="button"
           className="button primary-button generate-btn"
