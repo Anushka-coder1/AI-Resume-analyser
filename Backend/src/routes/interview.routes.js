@@ -14,7 +14,10 @@ const interviewRouter = express.Router()
 interviewRouter.post(
   '/',
   authMiddleware.authUser,
-  upload.single('resume'),
+  upload.fields([
+    { name: 'resume', maxCount: 1 },
+    { name: 'jobDescriptionFile', maxCount: 1 },
+  ]),
   interviewController.generateInterviewReportController
 )
 

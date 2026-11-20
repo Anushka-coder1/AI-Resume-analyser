@@ -271,6 +271,18 @@ $shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
   color: #7f8796;
 }
 
+.job-description-upload { margin-top: 20px; }
+
+.upload-box--compact {
+  min-height: 148px;
+}
+
+.upload-box--compact .upload-icon {
+  height: 48px;
+  margin-bottom: 10px;
+  width: 48px;
+}
+
 input[type='file'] {
   display: none;
 }

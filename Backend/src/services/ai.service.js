@@ -55,6 +55,82 @@ const interviewReportSchema = z.object({
   title: z.string().describe('The title of the job for which the interview report is generated'),
 })
 
+const structuredExperienceSchema = z.object({
+  rounds: z.array(z.object({
+    name: z.string(),
+    type: z.enum(['OA', 'Aptitude', 'Coding', 'Communication', 'Technical', 'Managerial', 'HR', 'Other', 'Unclassified']),
+    items: z.array(z.object({
+      content: z.string(),
+      kind: z.enum(['question', 'activity', 'statement']),
+      primaryTag: z.string(),
+      secondaryTags: z.array(z.string()).max(4),
+    })),
+  })),
+  unclassifiedContent: z.array(z.string()),
+})
+
+function buildStructuredExperienceFallback(experience) {
+  return {
+    rounds: [{
+      name: 'Unclassified / Round Not Specified',
+      type: 'Unclassified',
+      items: [{ content: experience.trim(), kind: 'statement', primaryTag: 'Unclassified', secondaryTags: [] }],
+    }],
+    unclassifiedContent: [],
+  }
+}
+
+function withIntegritySummary(structured) {
+  const items = structured.rounds.flatMap((round) => round.items)
+  const questions = items.filter((item) => item.kind === 'question')
+  return {
+    ...structured,
+    integritySummary: {
+      originalQuestionsIdentified: questions.length,
+      questionsOrganized: questions.length,
+      questionsWithTopicTags: questions.filter((item) => item.primaryTag !== 'Unclassified').length,
+      unclassifiedItems: items.filter((item) => item.primaryTag === 'Unclassified').length + structured.unclassifiedContent.length,
+      informationAdded: 'None',
+      factualInformationInvented: 'None',
+    },
+  }
+}
+
+async function structureInterviewExperience({ company, role, experience }) {
+  if (!ai) return withIntegritySummary(buildStructuredExperienceFallback(experience))
+
+  const prompt = `You structure a candidate's interview experience without changing facts.
+
+Company: ${company}
+Role: ${role}
+Experience:\n${experience}
+
+Strict rules:
+- Preserve every original question, activity, and material statement in its original order.
+- Never invent questions, rounds, facts, technology, outcomes, or answers.
+- Use an explicit round name only when supplied or strongly supported by the surrounding text; otherwise use "Unclassified / Round Not Specified" with type "Unclassified".
+- Do not classify a round solely from a question topic.
+- For each item, set kind to question, activity, or statement. Use a concise primary tag only when supported; otherwise use "Unclassified". Secondary tags must also be supported.
+- Correct only obvious capitalization, punctuation, and spelling; preserve meaning and terminology.
+- Put content that cannot be reliably organized in unclassifiedContent.
+- Return only JSON matching the provided schema.`
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: {
+        responseMimeType: 'application/json',
+        responseJsonSchema: toJSONSchema(structuredExperienceSchema),
+      },
+    })
+    return withIntegritySummary(structuredExperienceSchema.parse(JSON.parse(response.text)))
+  } catch (error) {
+    console.error('Interview experience structuring error:', error)
+    return withIntegritySummary(buildStructuredExperienceFallback(experience))
+  }
+}
+
 function pickTitle(jobDescription) {
   const firstLine = jobDescription
     .split('\n')
@@ -829,4 +905,4 @@ async function generateResumePdf({ resume, selfDescription, jobDescription }) {
   return renderResumePdf(buildResumeHtml(content))
 }
 
-module.exports = { generateInterviewReport, generateResumePdf }
+module.exports = { generateInterviewReport, generateResumePdf, structureInterviewExperience }

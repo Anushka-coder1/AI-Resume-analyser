@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate } from 'react-router-dom'
 import { createExperience, getExperiences } from '../services/experience.api'
 import '../style/experiences.scss'
 
@@ -12,6 +12,7 @@ export const Experiences = () => {
   const [loadingMore, setLoadingMore] = useState(false)
   const [nextCursor, setNextCursor] = useState(null)
   const [message, setMessage] = useState('')
+  const [expandedPostId, setExpandedPostId] = useState(null)
 
   useEffect(() => {
     getExperiences()
@@ -109,10 +110,29 @@ export const Experiences = () => {
             {loading ? <p className="feed-status">Loading experiences...</p> : posts.length ? (
               <>
                 <div className="post-list">
-                  {posts.map((post) => <article className="experience-post" key={post._id}>
-                    <div className="post-topline"><div className="company-mark">{post.company.charAt(0).toUpperCase()}</div><div><h3>{post.company}</h3><p>{post.role} · shared by {post.user?.username || 'Community member'}</p></div><time>{new Date(post.createdAt).toLocaleDateString()}</time></div>
-                    <p className="post-copy">{post.experience}</p>
-                  </article>)}
+                  {posts.map((post) => {
+                    const structured = post.structuredExperience
+                    const isExpanded = expandedPostId === post._id
+                    return <article className="experience-post" key={post._id}>
+                      <div className="post-topline"><div className="company-mark">{post.company.charAt(0).toUpperCase()}</div><div><h3>{post.company}</h3><p>{post.role} · shared by {post.user?.username || 'Community member'}</p></div><time>{new Date(post.createdAt).toLocaleDateString()}</time></div>
+                      <p className="post-copy">{post.experience}</p>
+                      {structured?.rounds?.length ? <>
+                        <button type="button" className="structured-toggle" onClick={() => setExpandedPostId(isExpanded ? null : post._id)}>{isExpanded ? 'Hide structured result' : 'View structured result'}</button>
+                        {isExpanded ? <section className="structured-result">
+                          <p className="structured-note">Tags are AI-organized from the author&apos;s original experience; they are not additional facts.</p>
+                          {structured.rounds.map((round, roundIndex) => <div className="round-card" key={`${post._id}-${roundIndex}`}>
+                            <div className="round-header"><h4>Round {roundIndex + 1}: {round.name}</h4><span>{round.type}</span></div>
+                            {round.items.map((item, itemIndex) => <div className="structured-item" key={`${post._id}-${roundIndex}-${itemIndex}`}>
+                              <p><strong>{item.kind === 'question' ? 'Question' : item.kind === 'activity' ? 'Activity' : 'Statement'}:</strong> {item.content}</p>
+                              <div className="tag-row"><span className="primary-tag">{item.primaryTag}</span>{item.secondaryTags.map((tag) => <span className="secondary-tag" key={tag}>{tag}</span>)}</div>
+                            </div>)}
+                          </div>)}
+                          {structured.unclassifiedContent?.length ? <div className="unclassified-card"><h4>Unclassified content</h4>{structured.unclassifiedContent.map((item, index) => <p key={index}>{item}</p>)}</div> : null}
+                          {structured.integritySummary ? <div className="integrity-summary"><strong>Data integrity</strong><span>{structured.integritySummary.questionsOrganized} questions organized · {structured.integritySummary.questionsWithTopicTags} tagged · {structured.integritySummary.unclassifiedItems} unclassified</span></div> : null}
+                        </section> : null}
+                      </> : null}
+                    </article>
+                  })}
                 </div>
                 {nextCursor ? <button type="button" className="load-more" onClick={loadMore} disabled={loadingMore}>{loadingMore ? 'Loading...' : 'Load more'}</button> : null}
               </>

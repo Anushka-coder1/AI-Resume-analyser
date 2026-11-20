@@ -27,38 +27,45 @@ function toCursor(document) {
 
 async function generateInterviewReportController(req, res) {
   const { selfDescription = '', jobDescription = '' } = req.body
+  const resumeFile = req.files?.resume?.[0]
+  const jobDescriptionFile = req.files?.jobDescriptionFile?.[0]
 
-  if (!jobDescription.trim()) {
+  if (!jobDescription.trim() && !jobDescriptionFile) {
     return res.status(400).json({
-      message: 'Job description is required',
+      message: 'Paste a job description or upload a job description PDF',
     })
   }
 
-  if (!req.file && !selfDescription.trim()) {
+  if (!resumeFile && !selfDescription.trim()) {
     return res.status(400).json({
       message: 'Upload a resume or provide a self description',
     })
   }
 
-  let resumeText = ''
-
-  if (req.file) {
-    const parser = new PDFParse({ data: Uint8Array.from(req.file.buffer) })
-    const parsedResume = await parser.getText()
-    resumeText = parsedResume.text.trim()
-    await parser.destroy()
+  const extractPdfText = async (file) => {
+    const parser = new PDFParse({ data: Uint8Array.from(file.buffer) })
+    try {
+      const parsed = await parser.getText()
+      return parsed.text.trim()
+    } finally {
+      await parser.destroy()
+    }
   }
+
+  const resumeText = resumeFile ? await extractPdfText(resumeFile) : ''
+  const uploadedJobDescription = jobDescriptionFile ? await extractPdfText(jobDescriptionFile) : ''
+  const fullJobDescription = [jobDescription.trim(), uploadedJobDescription].filter(Boolean).join('\n\n')
 
   const matching = analyseSkillMatch({
     resume: resumeText,
     selfDescription: selfDescription.trim(),
-    jobDescription: jobDescription.trim(),
+    jobDescription: fullJobDescription,
   })
 
   const interviewReportByAi = await generateInterviewReport({
     resume: resumeText,
     selfDescription: selfDescription.trim(),
-    jobDescription: jobDescription.trim(),
+    jobDescription: fullJobDescription,
     matching: {
       matchScore: matching.matchScore,
       scoringMethod: matching.scoringMethod,
@@ -71,7 +78,7 @@ async function generateInterviewReportController(req, res) {
     user: req.user.id,
     resume: resumeText,
     selfDescription: selfDescription.trim(),
-    jobDescription: jobDescription.trim(),
+    jobDescription: fullJobDescription,
     ...interviewReportByAi,
   })
 

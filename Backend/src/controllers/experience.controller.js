@@ -1,4 +1,6 @@
 const InterviewExperience = require('../models/experience.model')
+const { structureInterviewExperience } = require('../services/ai.service')
+const mongoose = require('mongoose')
 
 function parseCursor(cursor) {
   if (!cursor) return null
@@ -27,11 +29,18 @@ async function createExperienceController(req, res) {
     })
   }
 
+  const structuredExperience = await structureInterviewExperience({
+    company: company.trim(),
+    role: role.trim(),
+    experience: experience.trim(),
+  })
+
   const interviewExperience = await InterviewExperience.create({
     company: company.trim(),
     role: role.trim(),
     experience: experience.trim(),
     user: req.user.id,
+    structuredExperience,
   })
 
   const populatedExperience = await interviewExperience.populate(
@@ -77,4 +86,19 @@ async function getAllExperiencesController(req, res) {
   })
 }
 
-module.exports = { createExperienceController, getAllExperiencesController }
+async function getExperienceByIdController(req, res) {
+  if (!mongoose.Types.ObjectId.isValid(req.params.experienceId)) {
+    return res.status(404).json({ message: 'Interview experience not found' })
+  }
+
+  const interviewExperience = await InterviewExperience.findById(req.params.experienceId)
+    .populate('user', 'username')
+
+  if (!interviewExperience) {
+    return res.status(404).json({ message: 'Interview experience not found' })
+  }
+
+  res.status(200).json({ interviewExperience })
+}
+
+module.exports = { createExperienceController, getAllExperiencesController, getExperienceByIdController }

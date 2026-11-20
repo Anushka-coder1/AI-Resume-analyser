@@ -16,3 +16,8 @@ export const createExperience = async (payload) => {
   const response = await api.post('/api/experiences', payload)
   return response.data
 }
+
+export const getExperienceById = async (experienceId) => {
+  const response = await api.get(`/api/experiences/${experienceId}`)
+  return response.data
+}

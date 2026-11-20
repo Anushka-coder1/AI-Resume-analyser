@@ -28,13 +28,14 @@ export const useInterview = () => {
   } = context
 
   const generateReport = useCallback(
-    async ({ jobDescription, selfDescription, resumeFile }) => {
+    async ({ jobDescription, jobDescriptionFile, selfDescription, resumeFile }) => {
       setLoading(true)
       setError('')
 
       try {
         const response = await generateInterviewReport({
           jobDescription,
+          jobDescriptionFile,
           selfDescription,
           resumeFile,
         })

@@ -7,5 +7,6 @@ const experienceRouter = express.Router()
 // Community posts can be browsed by anyone who has access to the app.
 experienceRouter.get('/', experienceController.getAllExperiencesController)
 experienceRouter.post('/', authMiddleware.authUser, experienceController.createExperienceController)
+experienceRouter.get('/:experienceId', experienceController.getExperienceByIdController)
 
 module.exports = experienceRouter

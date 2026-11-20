@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { useNavigate, useParams } from 'react-router-dom'
 import '../style/interview.scss'
 import { useInterview } from '../hooks/useInterview'
 import { useAuth } from '../../auth/hooks/useAuth'

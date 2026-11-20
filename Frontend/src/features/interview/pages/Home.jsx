@@ -1,6 +1,6 @@
 import '../style/home.scss'
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate } from 'react-router-dom'
 import { useInterview } from '../hooks/useInterview'
 import { useAuth } from '../../auth/hooks/useAuth'
 
@@ -10,7 +10,9 @@ export const Home = () => {
   const [selfDescription, setSelfDescription] = useState('')
   const [localError, setLocalError] = useState('')
   const [resumeFileName, setResumeFileName] = useState('')
+  const [jobDescriptionFileName, setJobDescriptionFileName] = useState('')
   const resumeInputRef = useRef(null)
+  const jobDescriptionInputRef = useRef(null)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -31,10 +33,11 @@ export const Home = () => {
 
   const handleGenerateReport = async () => {
     const resumeFile = resumeInputRef.current?.files?.[0]
+    const jobDescriptionFile = jobDescriptionInputRef.current?.files?.[0]
 
-    if (!jobDescription.trim()) {
+    if (!jobDescription.trim() && !jobDescriptionFile) {
       setLocalError(
-        'Add the target job description before generating a report.',
+        'Paste the target job description or upload its PDF before generating a report.',
       )
       return
     }
@@ -51,6 +54,7 @@ export const Home = () => {
     try {
       const report = await generateReport({
         jobDescription,
+        jobDescriptionFile,
         selfDescription,
         resumeFile,
       })
@@ -129,6 +133,17 @@ Requirements
 
             <div className="character-count">
               {jobDescription.length} characters
+            </div>
+
+            <div className="upload-section job-description-upload">
+              <label htmlFor="jobDescriptionFile">Upload Job Description <span>(Optional)</span></label>
+              <label htmlFor="jobDescriptionFile" className="upload-box upload-box--compact">
+                <div className="upload-icon">JD</div>
+                <h4>{jobDescriptionFileName || 'Choose a job description file'}</h4>
+                <p>PDF only, max 3 MB</p>
+                <small>Its text is combined with anything pasted above.</small>
+              </label>
+              <input ref={jobDescriptionInputRef} type="file" id="jobDescriptionFile" accept=".pdf,application/pdf" onChange={(e) => setJobDescriptionFileName(e.target.files?.[0]?.name || '')} />
             </div>
           </div>
 
@@ -209,7 +224,6 @@ Requirements
                 : 'Generate AI Interview Report'}
             </button>
           </div>
-          {nextReportCursor ? <button type="button" className="load-more" onClick={loadMoreReports} disabled={loading}>Load more reports</button> : null}
         </section>
 
         <section className="history-panel">
@@ -243,6 +257,7 @@ Requirements
               </div>
             )}
           </div>
+          {nextReportCursor ? <button type="button" className="load-more" onClick={loadMoreReports} disabled={loading}>Load more reports</button> : null}
         </section>
 
         <footer className="footer">
