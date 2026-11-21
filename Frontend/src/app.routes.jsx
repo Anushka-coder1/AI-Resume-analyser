@@ -11,6 +11,7 @@ import { ExperienceForm } from './features/experiences/pages/ExperienceForm';
 import { ExperienceDetail } from './features/experiences/pages/ExperienceDetail';
 import AppLayout from './Layout/AppLayout';
 import { MyInterviews } from './features/interview/pages/MyInterviews';
+import { SkillRoadmap } from './features/interview/pages/SkillRoadmap';
 
 
 
@@ -33,6 +34,10 @@ export const router = createBrowserRouter([
       {
         path: '/interview/:interviewId',
         element: <Protected><Interview /></Protected>,
+      },
+      {
+        path: '/interview/:interviewId/skill-gap/:skillName',
+        element: <Protected><SkillRoadmap /></Protected>,
       },
       {
         path: '/reports',

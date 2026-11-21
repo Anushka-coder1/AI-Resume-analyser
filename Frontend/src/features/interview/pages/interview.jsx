@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import '../style/interview.scss'
 import { useInterview } from '../hooks/useInterview'
-import { useAuth } from '../../auth/hooks/useAuth'
 
 export const Interview = () => {
   const { interviewId } = useParams()
@@ -39,8 +38,6 @@ export const Interview = () => {
   //   localStorage.removeItem('token')
   //   navigate('/login')
   // }
-  const { handleLogout } = useAuth()
-
   const nextItem = () => {
     if (activeTab === 'technical' && selectedIndex < technical.length - 1) {
       setSelectedIndex((value) => value + 1)
@@ -121,17 +118,7 @@ export const Interview = () => {
 
   return (
     <main className="interview-page">
-      <button className="generate-btn active logout" onClick={handleLogout}>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          width="20"
-          height="20"
-          fill="currentColor"
-        >
-          <path d="M4 18H6V20H18V4H6V6H4V3C4 2.44772 4.44772 2 5 2H19C19.5523 2 20 2.44772 20 3V21C20 21.5523 19.5523 22 19 22H5C4.44772 22 4 21.5523 4 21V18ZM6 11H13V13H6V16L1 12L6 8V11Z"></path>
-        </svg>
-      </button>
+      
       <div className="background-circle one"></div>
       <div className="background-circle two"></div>
 
@@ -314,12 +301,20 @@ export const Interview = () => {
               <div className="skills">
                 {skillGaps.length ? (
                   skillGaps.map((skill, index) => (
-                    <div className="skill-card" key={index}>
+                    <Link
+                      className="skill-card skill-card--link"
+                      key={`${skill.skill}-${index}`}
+                      to={`/interview/${interviewId}/skill-gap/${encodeURIComponent(skill.skill)}`}
+                      aria-label={`View learning roadmap for ${skill.skill}`}
+                    >
                       <span>{skill.skill}</span>
-                      <small className={`severity ${skill.severity}`}>
-                        {skill.severity}
-                      </small>
-                    </div>
+                      <span className="skill-card__meta">
+                        <small className={`severity ${skill.severity}`}>
+                          {skill.severity}
+                        </small>
+                        <small className="skill-card__action">View roadmap →</small>
+                      </span>
+                    </Link>
                   ))
                 ) : (
                   <div className="skill-card">
