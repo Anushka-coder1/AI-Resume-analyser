@@ -99,6 +99,17 @@ const interviewReportSchema = new mongoose.Schema({
     type:mongoose.Schema.Types.ObjectId,
     ref:"users"
   },
+  // All resume versions analysed against the same job description share a group.
+  // The first report's own _id is used as the group id.
+  resumeGroup: {
+    type: mongoose.Schema.Types.ObjectId,
+    index: true,
+  },
+  version: {
+    type: Number,
+    default: 1,
+    min: 1,
+  },
   title : {
     type : String,
     required : [true , "job title is required"]

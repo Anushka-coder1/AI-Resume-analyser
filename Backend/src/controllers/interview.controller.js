@@ -1,3 +1,4 @@
+const mongoose = require('mongoose')
 const { PDFParse } = require('pdf-parse')
 const {generateInterviewReport , generateResumePdf} = require('../services/ai.service')
 const interviewReportModel = require('../models/interview.model')
@@ -26,9 +27,28 @@ function toCursor(document) {
  */
 
 async function generateInterviewReportController(req, res) {
-  const { selfDescription = '', jobDescription = '' } = req.body
+  let { selfDescription = '', jobDescription = '' } = req.body
+  const { previousReportId } = req.body
   const resumeFile = req.files?.resume?.[0]
-  const jobDescriptionFile = req.files?.jobDescriptionFile?.[0]
+  let jobDescriptionFile = req.files?.jobDescriptionFile?.[0]
+
+  // Re-upload: a new resume version analysed against the previous report's job description.
+  let previousReport = null
+  if (previousReportId) {
+    if (!mongoose.isValidObjectId(previousReportId)) {
+      return res.status(400).json({ message: 'Invalid previous report id' })
+    }
+    previousReport = await interviewReportModel.findOne({ _id: previousReportId, user: req.user.id })
+    if (!previousReport) {
+      return res.status(404).json({ message: 'Previous report not found' })
+    }
+    if (!resumeFile) {
+      return res.status(400).json({ message: 'Upload the new resume version as a PDF' })
+    }
+    jobDescription = previousReport.jobDescription
+    jobDescriptionFile = undefined
+    if (!selfDescription.trim()) selfDescription = previousReport.selfDescription || ''
+  }
 
   if (!jobDescription.trim() && !jobDescriptionFile) {
     return res.status(400).json({
@@ -74,7 +94,30 @@ async function generateInterviewReportController(req, res) {
     },
   })
 
+  const reportId = new mongoose.Types.ObjectId()
+  let resumeGroup = reportId
+  let version = 1
+
+  if (previousReport) {
+    resumeGroup = previousReport.resumeGroup || previousReport._id
+    // Reports created before versioning existed have no group yet: make them v1.
+    if (!previousReport.resumeGroup) {
+      await interviewReportModel.updateOne(
+        { _id: previousReport._id },
+        { $set: { resumeGroup, version: previousReport.version || 1 } }
+      )
+    }
+    const latest = await interviewReportModel
+      .findOne({ user: req.user.id, resumeGroup })
+      .sort({ version: -1 })
+      .select('version')
+    version = (latest?.version || previousReport.version || 1) + 1
+  }
+
   const interviewReport = await interviewReportModel.create({
+    _id: reportId,
+    resumeGroup,
+    version,
     user: req.user.id,
     resume: resumeText,
     selfDescription: selfDescription.trim(),
@@ -113,6 +156,47 @@ async function getInterviewReportByIdController(req, res) {
 }
 
 /**
+ * @description Controller to list every resume version analysed against the same job description
+ */
+async function getReportVersionsController(req, res) {
+  const { interviewId } = req.params
+  if (!mongoose.isValidObjectId(interviewId)) {
+    return res.status(400).json({ message: 'Invalid report id' })
+  }
+
+  const report = await interviewReportModel
+    .findOne({ _id: interviewId, user: req.user.id })
+    .select('resumeGroup')
+
+  if (!report) {
+    return res.status(404).json({ message: 'Interview report not found' })
+  }
+
+  const group = report.resumeGroup || report._id
+  const documents = await interviewReportModel
+    .find({ user: req.user.id, $or: [{ resumeGroup: group }, { _id: group }] })
+    .sort({ version: 1, createdAt: 1 })
+    .select('version matchScore createdAt requirementEvidence.skill requirementEvidence.matched')
+
+  const versions = documents.map((doc) => {
+    const evidence = doc.requirementEvidence || []
+    return {
+      _id: doc._id,
+      version: doc.version || 1,
+      matchScore: doc.matchScore ?? 0,
+      createdAt: doc.createdAt,
+      matchedSkills: evidence.filter((item) => item.matched).map((item) => item.skill),
+      totalSkills: evidence.length,
+    }
+  })
+
+  res.status(200).json({
+    message: 'Resume versions fetched successfully.',
+    versions,
+  })
+}
+
+/**
  * @description Controller to get all interview report by logged in user
  */
 
@@ -135,7 +219,7 @@ async function getAllInterviewReportaController(req, res) {
     .find(query)
     .sort({ createdAt: -1, _id: -1 })
     .limit(limit + 1)
-    .select('title matchScore createdAt updatedAt')
+    .select('title matchScore version createdAt updatedAt')
 
   const hasMore = results.length > limit
   const interviewReports = hasMore ? results.slice(0, limit) : results
@@ -184,5 +268,6 @@ module.exports = {
   generateInterviewReportController,
   getInterviewReportByIdController,
   getAllInterviewReportaController,
-  generateResumePdfController
+  generateResumePdfController,
+  getReportVersionsController,
 }

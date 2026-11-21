@@ -33,7 +33,18 @@ interviewRouter.get(
 )
 
 /**
- * @route GET / 
+ * @route GET /report/:interviewId/versions
+ * @description list all resume versions analysed against the same job description
+ * @access private
+ */
+interviewRouter.get(
+  '/report/:interviewId/versions',
+  authMiddleware.authUser,
+  interviewController.getReportVersionsController
+)
+
+/**
+ * @route GET /
  * @description get all the interview report by the loggged in user
  * @access private
  */
