@@ -10,10 +10,15 @@ export const generateInterviewReport = async ({
   jobDescriptionFile,
   selfDescription,
   resumeFile,
+  previousReportId,
 }) => {
   const formData = new FormData()
-  formData.append('jobDescription', jobDescription)
-  formData.append('selfDescription', selfDescription)
+  formData.append('jobDescription', jobDescription || '')
+  formData.append('selfDescription', selfDescription || '')
+
+  if (previousReportId) {
+    formData.append('previousReportId', previousReportId)
+  }
 
   if (jobDescriptionFile) {
     formData.append('jobDescriptionFile', jobDescriptionFile)
@@ -34,6 +39,11 @@ export const generateInterviewReport = async ({
 
 export const getInterviewReportById = async ({ interviewId }) => {
   const response = await api.get(`/api/interview/report/${interviewId}`)
+  return response.data
+}
+
+export const getInterviewReportVersions = async ({ interviewId }) => {
+  const response = await api.get(`/api/interview/report/${interviewId}/versions`)
   return response.data
 }
 
