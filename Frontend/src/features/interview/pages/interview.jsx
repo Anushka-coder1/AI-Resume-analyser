@@ -1,8 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import '../style/interview.scss'
 import { useInterview } from '../hooks/useInterview'
 import { useAuth } from '../../auth/hooks/useAuth'
+import { ResumeProgress } from '../components/ResumeProgress'
+
+const priorityFor = (weight) => (
+  weight >= 5 ? 'high' : weight >= 3 ? 'medium' : 'low'
+)
 
 export const Interview = () => {
   const { interviewId } = useParams()
@@ -62,18 +67,11 @@ export const Interview = () => {
   const currentTechnical = technical[selectedIndex]
   const currentBehavioral = behavioral[selectedIndex]
   const currentRoadmap = roadmap[selectedIndex]
-
-  // const handleLogout = async () => {
-  //   try {
-  //     await axios.post('/api/auth/logout', {}, { withCredentials: true })
-  //   } catch (err) {
-  //     console.log(err)
-  //   }
-
-  //   localStorage.removeItem('token')
-  //   navigate('/login')
-  // }
-  const { handleLogout } = useAuth()
+  const activeList = activeTab === 'technical'
+    ? technical
+    : activeTab === 'behavioral'
+      ? behavioral
+      : roadmap
 
   const nextItem = () => {
     if (selectedIndex < activeList.length - 1) {
@@ -191,6 +189,13 @@ export const Interview = () => {
           </div>
 
           <div className="header-actions">
+            <button
+              className="action-btn ghost"
+              onClick={() => navigate(`/roadmaps?reportId=${report._id}`)}
+              disabled={loading || reuploading}
+            >
+              Create learning roadmap
+            </button>
             <input
               ref={resumeInputRef}
               type="file"
@@ -313,9 +318,16 @@ export const Interview = () => {
             ) : (
               <ul className="gap-list">
                 {skillGaps.map((gap) => (
-                  <li key={gap.skill}>
+                  <li key={gap.skill} className="gap-list__item">
                     <span>{gap.skill}</span>
-                    <span className={`severity ${gap.severity}`}>{gap.severity}</span>
+                    <button
+                      type="button"
+                      className={`severity ${gap.severity}`}
+                      onClick={() => navigate(`/roadmaps?reportId=${report._id}`)}
+                      title={`Create a learning roadmap for ${gap.skill} and the other skill gaps`}
+                    >
+                      {gap.severity} · roadmap
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -477,7 +489,7 @@ export const Interview = () => {
                 )}
               </div>
             </div>
-            {requirements.length ? <div className="evidence-list"><h3>Match evidence</h3>{requirements.map((requirement) => <div className="evidence-card" key={requirement.skill}><strong>{requirement.skill}</strong><small>{requirement.matched ? 'Found in profile' : 'Not found in profile'} · weight {requirement.weight}</small><p>{requirement.candidateEvidence || requirement.jobEvidence}</p></div>)}</div> : null}
+            {evidence?.length ? <div className="evidence-list"><h3>Match evidence</h3>{evidence.map((requirement) => <div className="evidence-card" key={requirement.skill}><strong>{requirement.skill}</strong><small>{requirement.matched ? 'Found in profile' : 'Not found in profile'} · weight {requirement.weight}</small><p>{requirement.candidateEvidence || requirement.jobEvidence}</p></div>)}</div> : null}
           </aside>
         </div>
       </div>

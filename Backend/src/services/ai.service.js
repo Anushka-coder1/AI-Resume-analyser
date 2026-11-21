@@ -55,6 +55,48 @@ const interviewReportSchema = z.object({
   title: z.string().describe('The title of the job for which the interview report is generated'),
 })
 
+const roadmapPersonalizationSchema = z.object({
+  tasks: z.array(z.object({
+    index: z.number().int().nonnegative(),
+    description: z.string().min(1).max(500),
+  })),
+})
+
+/**
+ * Personalizes task wording only. Task selection, resources, durations and
+ * ordering remain database-controlled and are validated by roadmap.service.
+ */
+async function personalizeRoadmapTasks({ targetRole, tasks }) {
+  if (!ai || !tasks.length) return tasks
+  const sourceTasks = tasks.map((task, index) => ({
+    index,
+    title: task.title,
+    description: task.description,
+    estimatedHours: task.estimatedHours,
+    dayNumber: task.dayNumber,
+  }))
+  const prompt = `You personalize concise learning-task descriptions for a ${targetRole} candidate.
+
+Use only the supplied task title and source description. Do not add technologies, URLs, resources, prerequisites, hours, or tasks. Keep the same task indexes exactly once. Return JSON only.
+
+Tasks:\n${JSON.stringify(sourceTasks)}`
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: { responseMimeType: 'application/json', responseJsonSchema: toJSONSchema(roadmapPersonalizationSchema) },
+    })
+    const personalized = roadmapPersonalizationSchema.parse(JSON.parse(response.text)).tasks
+    if (personalized.length !== tasks.length || new Set(personalized.map((task) => task.index)).size !== tasks.length) return tasks
+    const descriptions = new Map(personalized.map((task) => [task.index, task.description]))
+    if (tasks.some((_, index) => !descriptions.has(index))) return tasks
+    return tasks.map((task, index) => ({ ...task, description: descriptions.get(index) }))
+  } catch (error) {
+    console.error('Roadmap personalization error:', error)
+    return tasks
+  }
+}
+
 const structuredExperienceSchema = z.object({
   rounds: z.array(z.object({
     name: z.string(),
@@ -905,4 +947,4 @@ async function generateResumePdf({ resume, selfDescription, jobDescription }) {
   return renderResumePdf(buildResumeHtml(content))
 }
 
-module.exports = { generateInterviewReport, generateResumePdf, structureInterviewExperience }
+module.exports = { generateInterviewReport, generateResumePdf, structureInterviewExperience, personalizeRoadmapTasks }

@@ -2,7 +2,6 @@ import '../style/home.scss'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useInterview } from '../hooks/useInterview'
-import { useAuth } from '../../auth/hooks/useAuth'
 
 export const Home = () => {
   const { loading, error, reports, nextReportCursor, generateReport, getReports } = useInterview()
@@ -18,18 +17,6 @@ export const Home = () => {
   useEffect(() => {
     getReports().catch(() => {})
   }, [getReports])
-
-  // const handleLogout = async () => {
-  //   try {
-  //     await axios.post('/api/auth/logout', {}, { withCredentials: true })
-  //   } catch (err) {
-  //     console.log(err)
-  //   }
-
-  //   localStorage.removeItem('token')
-  //   navigate('/login')
-  // }
-  const { handleLogout } = useAuth()
 
   const handleGenerateReport = async () => {
     const resumeFile = resumeInputRef.current?.files?.[0]

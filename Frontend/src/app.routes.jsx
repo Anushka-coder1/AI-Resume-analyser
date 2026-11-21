@@ -12,6 +12,7 @@ import { ExperienceDetail } from './features/experiences/pages/ExperienceDetail'
 import AppLayout from './Layout/AppLayout';
 import { MyInterviews } from './features/interview/pages/MyInterviews';
 import { SkillRoadmap } from './features/interview/pages/SkillRoadmap';
+import { Roadmaps } from './features/interview/pages/Roadmaps';
 
 
 
@@ -42,6 +43,10 @@ export const router = createBrowserRouter([
       {
         path: '/reports',
         element: <Protected><MyInterviews /></Protected>,
+      },
+      {
+        path: '/roadmaps',
+        element: <Protected><Roadmaps /></Protected>,
       },
       {
         path: '/experiences',

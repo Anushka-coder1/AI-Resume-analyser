@@ -19,11 +19,13 @@ app.use(cors({
 const authRoutes = require('./routes/auth.routes.js');
 const interviewRouter = require('./routes/interview.routes.js');
 const experienceRouter = require('./routes/experience.routes.js');
+const roadmapRouter = require('./routes/roadmap.routes.js');
 
 // using the routes here
 app.use('/api/auth', authRoutes);
 app.use('/api/interview', interviewRouter);
 app.use('/api/experiences', experienceRouter);
+app.use('/api/roadmaps', roadmapRouter);
 
 
 module.exports = app;

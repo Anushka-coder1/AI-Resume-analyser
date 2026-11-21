@@ -7,6 +7,7 @@ const navItems = [
   { name: 'Home', to: '/' },
   { name: 'Experiences', to: '/experiences' },
   { name: 'My Interviews', to: '/reports' },
+  { name: 'Learning Roadmaps', to: '/roadmaps' },
 ]
 
 export const Navbar = () => {
