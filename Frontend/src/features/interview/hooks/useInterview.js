@@ -28,7 +28,7 @@ export const useInterview = () => {
   } = context
 
   const generateReport = useCallback(
-    async ({ jobDescription, jobDescriptionFile, selfDescription, resumeFile }) => {
+    async ({ jobDescription, jobDescriptionFile, selfDescription, resumeFile, previousReportId }) => {
       setLoading(true)
       setError('')
 
@@ -38,6 +38,7 @@ export const useInterview = () => {
           jobDescriptionFile,
           selfDescription,
           resumeFile,
+          previousReportId,
         })
 
         setReport(response.interviewReport)
