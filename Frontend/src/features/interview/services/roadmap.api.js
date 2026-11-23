@@ -8,3 +8,5 @@ export const getRoadmap = async (roadmapId) => (await api.get(`/api/roadmaps/${r
 export const updateRoadmapTask = async (roadmapId, taskId, status) => (await api.patch(`/api/roadmaps/${roadmapId}/tasks/${taskId}`, { status })).data
 export const updateRoadmapTaskTime = async (roadmapId, taskId, timeSpent) => (await api.patch(`/api/roadmaps/${roadmapId}/tasks/${taskId}/time`, { timeSpent })).data
 export const regenerateRoadmap = async (roadmapId, payload) => (await api.post(`/api/roadmaps/${roadmapId}/regenerate`, payload)).data
+export const updateRoadmap = async (roadmapId, payload) => (await api.patch(`/api/roadmaps/${roadmapId}`, payload)).data
+export const deleteRoadmap = async (roadmapId) => api.delete(`/api/roadmaps/${roadmapId}`)

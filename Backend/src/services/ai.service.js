@@ -62,6 +62,69 @@ const roadmapPersonalizationSchema = z.object({
   })),
 })
 
+// Keep Gemini's structured-output schema intentionally simple. The API rejects
+// deeply nested schemas with formats, enums and numeric bounds; validation is
+// performed after generation instead.
+const skillRoadmapResponseSchema = z.object({
+  title: z.string(),
+  topics: z.array(z.object({
+    title: z.string(),
+    description: z.string(),
+    estimatedHours: z.number(),
+    resources: z.array(z.object({
+      title: z.string(),
+      type: z.string(),
+      url: z.string(),
+      platform: z.string(),
+    })),
+  })),
+})
+
+function validateSkillRoadmap(value) {
+  const plan = skillRoadmapResponseSchema.parse(value)
+  if (!plan.title.trim() || plan.title.length > 140 || plan.topics.length < 2 || plan.topics.length > 12) throw new Error('Invalid roadmap topics')
+  const allowedTypes = new Set(['documentation', 'video', 'article', 'course'])
+  const topics = plan.topics.map((topic) => {
+    if (!topic.title.trim() || topic.title.length > 140 || !topic.description.trim() || topic.description.length > 700 || !Number.isFinite(topic.estimatedHours) || topic.estimatedHours <= 0 || topic.estimatedHours > 40) throw new Error('Invalid roadmap topic')
+    if (topic.resources.length < 1 || topic.resources.length > 4) throw new Error('Invalid roadmap resources')
+    const resources = topic.resources.map((resource) => {
+      if (!resource.title.trim() || !resource.platform.trim() || !allowedTypes.has(resource.type) || !/^https:\/\/.+/i.test(resource.url)) throw new Error('Invalid roadmap resource URL')
+      return resource
+    })
+    return { ...topic, resources }
+  })
+  return { title: plan.title, topics }
+}
+
+async function generateSkillGapRoadmap({ skillName, targetRole, jobDescription, durationInDays, dailyStudyHours }) {
+  if (!ai) {
+    const error = new Error('Gemini is not configured. Add GOOGLE_GENAI_API_KEY to generate learning roadmaps.')
+    error.statusCode = 503
+    throw error
+  }
+  const prompt = `Create a realistic learning roadmap for exactly one missing interview skill.
+
+Skill gap: ${skillName}
+Target role: ${targetRole}
+Available schedule: ${durationInDays} days, ${dailyStudyHours} study hours per day.
+Job description context: ${jobDescription.slice(0, 6000)}
+
+Return only JSON matching the schema. Include 2-12 ordered topics. Each topic must have 1-4 real, direct, publicly accessible learning URLs. Include both official documentation or high-quality websites and YouTube videos where useful. Never include unrelated skills, duplicate topics, placeholder URLs, search-result URLs, or more total hours than the available schedule. Resources must be appropriate for the exact skill gap.`
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3.5-flash-lite',
+      contents: prompt,
+      config: { responseMimeType: 'application/json', responseJsonSchema: toJSONSchema(skillRoadmapResponseSchema) },
+    })
+    return validateSkillRoadmap(JSON.parse(response.text))
+  } catch (error) {
+    console.error('Skill roadmap generation error:', error)
+    const safeError = new Error('Gemini could not generate a valid learning roadmap. Please try again.')
+    safeError.statusCode = 502
+    throw safeError
+  }
+}
+
 /**
  * Personalizes task wording only. Task selection, resources, durations and
  * ordering remain database-controlled and are validated by roadmap.service.
@@ -82,7 +145,7 @@ Use only the supplied task title and source description. Do not add technologies
 Tasks:\n${JSON.stringify(sourceTasks)}`
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.5-flash-lite',
       contents: prompt,
       config: { responseMimeType: 'application/json', responseJsonSchema: toJSONSchema(roadmapPersonalizationSchema) },
     })
@@ -159,7 +222,7 @@ Strict rules:
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.5-flash-lite',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
@@ -481,7 +544,7 @@ Return nothing except the JSON object.`
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.5-flash-lite',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
@@ -857,7 +920,7 @@ No code fences.
 Return only valid JSON.`
 
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
+    model: 'gemini-3.5-flash-lite',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
@@ -938,7 +1001,7 @@ async function generateResumePdf({ resume, selfDescription, jobDescription }) {
   if (ai) {
     const prompt = `Rewrite only the factual content in this resume for the target role. Never invent facts. Return JSON matching the schema: name, contact, summary, skills, and sections. Sections can be Experience, Projects, Education, or Certifications. Keep content concise enough for one A4 page.\n\nResume:\n${resume}\n\nSelf description:\n${selfDescription}\n\nTarget job description:\n${jobDescription}`
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash', contents: prompt,
+      model: 'gemini-3.5-flash-lite', contents: prompt,
       config: { responseMimeType: 'application/json', responseJsonSchema: toJSONSchema(resumeContentSchema) },
     })
     content = resumeContentSchema.parse(JSON.parse(response.text))
@@ -947,4 +1010,4 @@ async function generateResumePdf({ resume, selfDescription, jobDescription }) {
   return renderResumePdf(buildResumeHtml(content))
 }
 
-module.exports = { generateInterviewReport, generateResumePdf, structureInterviewExperience, personalizeRoadmapTasks }
+module.exports = { generateInterviewReport, generateResumePdf, structureInterviewExperience, personalizeRoadmapTasks, generateSkillGapRoadmap }

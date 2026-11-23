@@ -85,7 +85,7 @@ export const Register = () => {
             Register
           </button>
         </form>
-        <button
+        {/* <button
           type="button"
           className="button primary-button generate-btn"
           onClick={() => {
@@ -93,7 +93,7 @@ export const Register = () => {
           }}
         >
           Continue with Google
-        </button>
+        </button> */}
         <p className="auth-switch">
           Already have an account? <Link to="/login">Login</Link>
         </p>

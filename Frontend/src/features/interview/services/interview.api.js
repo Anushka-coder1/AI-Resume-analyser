@@ -42,6 +42,9 @@ export const getInterviewReportById = async ({ interviewId }) => {
   return response.data
 }
 
+export const renameInterviewReport = async ({ interviewId, title }) => (await api.patch(`/api/interview/report/${interviewId}`, { title })).data
+export const deleteInterviewReport = async ({ interviewId }) => api.delete(`/api/interview/report/${interviewId}`)
+
 export const getInterviewReportVersions = async ({ interviewId }) => {
   const response = await api.get(`/api/interview/report/${interviewId}/versions`)
   return response.data

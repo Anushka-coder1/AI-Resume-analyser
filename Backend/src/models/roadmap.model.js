@@ -3,6 +3,13 @@ const mongoose = require('mongoose')
 const objectId = mongoose.Schema.Types.ObjectId
 const importance = ['high', 'medium', 'low']
 
+const roadmapResourceSchema = new mongoose.Schema({
+  title: { type: String, required: true, trim: true },
+  type: { type: String, enum: ['documentation', 'video', 'article', 'course'], required: true },
+  url: { type: String, required: true, trim: true },
+  platform: { type: String, required: true, trim: true },
+}, { _id: false })
+
 const analysisSchema = new mongoose.Schema({
   userId: { type: objectId, ref: 'users', required: true, index: true },
   sourceReportId: { type: objectId, ref: 'InterviewReport', required: true },
@@ -47,7 +54,7 @@ const roadmapSchema = new mongoose.Schema({
     name: String,
     importance: { type: String, enum: importance },
     gapStatus: String,
-    learningPathStatus: { type: String, enum: ['available', 'requires_learning_path'], default: 'available' },
+    learningPathStatus: { type: String, enum: ['available', 'requires_learning_path', 'ai_generated'], default: 'ai_generated' },
   }],
   status: { type: String, enum: ['active', 'completed', 'archived'], default: 'active', index: true },
   overallProgress: { type: Number, min: 0, max: 100, default: 0 },
@@ -69,7 +76,7 @@ const roadmapProgressSchema = new mongoose.Schema({
   status: { type: String, enum: ['pending', 'in_progress', 'completed', 'skipped'], default: 'pending', index: true },
   completedAt: { type: Date, default: null },
   timeSpent: { type: Number, min: 0, default: 0 },
-  resources: [{ title: String, type: String, url: String, platform: String }],
+  resources: { type: [roadmapResourceSchema], default: [] },
   projectReference: { type: objectId, ref: 'LearningProject', default: null },
 }, { timestamps: true })
 roadmapProgressSchema.index({ roadmapId: 1, dayNumber: 1, scheduledDate: 1 })

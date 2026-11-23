@@ -73,7 +73,7 @@ export const Login = () => {
           </button>
         </form>
         {/* <p className='italic center'>----or----</p> */}
-        <button
+        {/* <button
           type="button"
           className="button primary-button generate-btn"
           onClick={() => {
@@ -81,7 +81,7 @@ export const Login = () => {
           }}
         >
           Continue with Google
-        </button>
+        </button> */}
 
         <p className="auth-switch">
           Don&apos;t have an account? <Link to="/register">Register</Link>

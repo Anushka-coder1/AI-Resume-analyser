@@ -3,6 +3,7 @@ const { PDFParse } = require('pdf-parse')
 const {generateInterviewReport , generateResumePdf} = require('../services/ai.service')
 const interviewReportModel = require('../models/interview.model')
 const { analyseSkillMatch } = require('../services/skill-matching.service')
+const { Analysis, Roadmap, RoadmapProgress, SkillGap } = require('../models/roadmap.model')
 
 function parseCursor(cursor) {
   if (!cursor) return null
@@ -262,6 +263,28 @@ async function generateResumePdfController(req,res){
   return res.send(pdfBuffer);
 }
 
+async function renameInterviewReportController(req, res) {
+  const title = String(req.body.title || '').trim()
+  if (!title || title.length > 140) return res.status(400).json({ message: 'Interview name must be between 1 and 140 characters' })
+  const report = await interviewReportModel.findOneAndUpdate({ _id: req.params.interviewId, user: req.user.id }, { $set: { title } }, { new: true })
+  if (!report) return res.status(404).json({ message: 'Interview report not found' })
+  return res.status(200).json({ interviewReport: report })
+}
+
+async function deleteInterviewReportController(req, res) {
+  const report = await interviewReportModel.findOneAndDelete({ _id: req.params.interviewId, user: req.user.id })
+  if (!report) return res.status(404).json({ message: 'Interview report not found' })
+  const analyses = await Analysis.find({ userId: req.user.id, sourceReportId: report._id }).select('_id')
+  const analysisIds = analyses.map((analysis) => analysis._id)
+  const roadmaps = await Roadmap.find({ userId: req.user.id, analysisId: { $in: analysisIds } }).select('_id')
+  const roadmapIds = roadmaps.map((roadmap) => roadmap._id)
+  if (roadmapIds.length) await RoadmapProgress.deleteMany({ userId: req.user.id, roadmapId: { $in: roadmapIds } })
+  if (analysisIds.length) await SkillGap.deleteMany({ analysisId: { $in: analysisIds } })
+  if (roadmapIds.length) await Roadmap.deleteMany({ _id: { $in: roadmapIds }, userId: req.user.id })
+  if (analysisIds.length) await Analysis.deleteMany({ _id: { $in: analysisIds }, userId: req.user.id })
+  return res.status(204).send()
+}
+
 
 
 module.exports = {
@@ -270,4 +293,6 @@ module.exports = {
   getAllInterviewReportaController,
   generateResumePdfController,
   getReportVersionsController,
+  renameInterviewReportController,
+  deleteInterviewReportController,
 }

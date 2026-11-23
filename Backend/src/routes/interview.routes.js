@@ -32,6 +32,9 @@ interviewRouter.get(
   interviewController.getInterviewReportByIdController
 )
 
+interviewRouter.patch('/report/:interviewId', authMiddleware.authUser, interviewController.renameInterviewReportController)
+interviewRouter.delete('/report/:interviewId', authMiddleware.authUser, interviewController.deleteInterviewReportController)
+
 /**
  * @route GET /report/:interviewId/versions
  * @description list all resume versions analysed against the same job description

@@ -2,23 +2,35 @@ import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import '../style/interview.scss'
 import { useInterview } from '../hooks/useInterview'
-import { useAuth } from '../../auth/hooks/useAuth'
 import { ResumeProgress } from '../components/ResumeProgress'
-
-const priorityFor = (weight) => (
+import { generateRoadmap } from '../services/roadmap.api'
+import {
+  deleteInterviewReport,
+  renameInterviewReport,
+} from '../services/interview.api'
+import { Trash, SquarePen , Upload} from 'lucide-react'
+const priorityFor = (weight) =>
   weight >= 5 ? 'high' : weight >= 3 ? 'medium' : 'low'
-)
 
 export const Interview = () => {
   const { interviewId } = useParams()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('technical')
   const [selectedIndex, setSelectedIndex] = useState(0)
-  const { report, loading, error, getReportById, getResumePdf, generateReport } = useInterview()
-  const { handleLogout } = useAuth()
+  const {
+    report,
+    loading,
+    error,
+    getReportById,
+    getResumePdf,
+    generateReport,
+    getReports,
+  } = useInterview()
+  const [message, setMessage] = useState('')
   const resumeInputRef = useRef(null)
   const [reuploading, setReuploading] = useState(false)
   const [reuploadError, setReuploadError] = useState('')
+  const [creatingSkillRoadmap, setCreatingSkillRoadmap] = useState('')
 
   const handleResumeReupload = async (event) => {
     const file = event.target.files?.[0]
@@ -46,7 +58,10 @@ export const Interview = () => {
       setSelectedIndex(0)
       navigate(`/interview/${newReport._id}`)
     } catch (err) {
-      setReuploadError(err.response?.data?.message || 'Could not analyse the new resume. Please try again.')
+      setReuploadError(
+        err.response?.data?.message ||
+          'Could not analyse the new resume. Please try again.',
+      )
     } finally {
       setReuploading(false)
     }
@@ -67,11 +82,12 @@ export const Interview = () => {
   const currentTechnical = technical[selectedIndex]
   const currentBehavioral = behavioral[selectedIndex]
   const currentRoadmap = roadmap[selectedIndex]
-  const activeList = activeTab === 'technical'
-    ? technical
-    : activeTab === 'behavioral'
-      ? behavioral
-      : roadmap
+  const activeList =
+    activeTab === 'technical'
+      ? technical
+      : activeTab === 'behavioral'
+        ? behavioral
+        : roadmap
 
   const nextItem = () => {
     if (selectedIndex < activeList.length - 1) {
@@ -88,6 +104,21 @@ export const Interview = () => {
   const changeTab = (tab) => {
     setActiveTab(tab)
     setSelectedIndex(0)
+  }
+
+  const openSkillRoadmap = async (skillName) => {
+    setCreatingSkillRoadmap(skillName)
+    try {
+      const result = await generateRoadmap({ reportId: interviewId, skillName })
+      navigate(`/roadmaps?roadmapId=${result.roadmap._id}`)
+    } catch (err) {
+      setReuploadError(
+        err.response?.data?.message ||
+          'Gemini could not create this learning roadmap. Please try again.',
+      )
+    } finally {
+      setCreatingSkillRoadmap('')
+    }
   }
 
   if (loading && !report) {
@@ -142,46 +173,81 @@ export const Interview = () => {
   }
 
   const matchScore = report.matchScore ?? 0
-  const evidence = Array.isArray(report.requirementEvidence) ? report.requirementEvidence : null
+  const evidence = Array.isArray(report.requirementEvidence)
+    ? report.requirementEvidence
+    : null
   // Matched first, then missing; heavier skills first within each group.
   const checklist = evidence
-    ? [...evidence].sort((a, b) => Number(b.matched) - Number(a.matched) || b.weight - a.weight)
+    ? [...evidence].sort(
+        (a, b) => Number(b.matched) - Number(a.matched) || b.weight - a.weight,
+      )
     : []
   const matchedCount = checklist.filter((item) => item.matched).length
   // Prefer the saved skillGaps; fall back to deriving them from the evidence.
-  const skillGaps = Array.isArray(report.skillGaps) && report.skillGaps.length
-    ? report.skillGaps
-    : checklist.filter((item) => !item.matched).map((item) => ({ skill: item.skill, severity: priorityFor(item.weight) }))
+  const skillGaps =
+    Array.isArray(report.skillGaps) && report.skillGaps.length
+      ? report.skillGaps
+      : checklist
+          .filter((item) => !item.matched)
+          .map((item) => ({
+            skill: item.skill,
+            severity: priorityFor(item.weight),
+          }))
   const fitLabel =
-    matchScore >= 80 ? 'Strong fit' : matchScore >= 60 ? 'Promising fit' : 'Needs preparation'
+    matchScore >= 80
+      ? 'Strong fit'
+      : matchScore >= 60
+        ? 'Promising fit'
+        : 'Needs preparation'
 
   const tabs = [
     { id: 'technical', label: 'Technical Questions', count: technical.length },
-    { id: 'behavioral', label: 'Behavioral Questions', count: behavioral.length },
+    {
+      id: 'behavioral',
+      label: 'Behavioral Questions',
+      count: behavioral.length,
+    },
     { id: 'roadmap', label: 'Preparation Roadmap', count: roadmap.length },
   ]
 
+  const renameReport = async (report) => {
+    const title = window.prompt('Interview name', report.title)
+    if (title === null || title.trim() === report.title) return
+    try {
+      await renameInterviewReport({
+        interviewId: report._id,
+        title: title.trim(),
+      })
+      await getReports()
+    } catch (err) {
+      setMessage(err.response?.data?.message || 'Unable to rename interview.')
+    }
+  }
+  const removeReport = async (report) => {
+    if (
+      !window.confirm(
+        `Delete “${report.title}” and its roadmaps? This cannot be undone.`,
+      )
+    )
+      return
+    try {
+      await deleteInterviewReport({ interviewId: report._id })
+      await getReports()
+    } catch (err) {
+      setMessage(err.response?.data?.message || 'Unable to delete interview.')
+    }
+  }
+
   return (
     <main className="interview-page">
-      <button className="generate-btn active logout" onClick={handleLogout}>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          width="20"
-          height="20"
-          fill="currentColor"
-        >
-          <path d="M4 18H6V20H18V4H6V6H4V3C4 2.44772 4.44772 2 5 2H19C19.5523 2 20 2.44772 20 3V21C20 21.5523 19.5523 22 19 22H5C4.44772 22 4 21.5523 4 21V18ZM6 11H13V13H6V16L1 12L6 8V11Z"></path>
-        </svg>
-      </button>
       <div className="background-circle one"></div>
       <div className="background-circle two"></div>
 
       <div className="interview-container">
         <header className="page-header">
           <div className="page-heading">
-            <p className="badge">{report.title}</p>
-            <h1>Interview Preparation Dashboard</h1>
+            <p className="badge">Interview Preparation Dashboard</p>
+            <h1>{report.title} </h1>
             <p>
               Practice targeted questions, fix your gaps, and follow a practical
               prep roadmap for this role.
@@ -189,13 +255,6 @@ export const Interview = () => {
           </div>
 
           <div className="header-actions">
-            <button
-              className="action-btn ghost"
-              onClick={() => navigate(`/roadmaps?reportId=${report._id}`)}
-              disabled={loading || reuploading}
-            >
-              Create learning roadmap
-            </button>
             <input
               ref={resumeInputRef}
               type="file"
@@ -209,28 +268,26 @@ export const Interview = () => {
               disabled={reuploading || loading}
               title="Upload an updated resume and re-run the analysis against this same job description"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
-                <path d="M3 19H21V21H3V19ZM13 5.82843V17H11V5.82843L4.92893 11.8995L3.51472 10.4853L12 2L20.4853 10.4853L19.0711 11.8995L13 5.82843Z"></path>
-              </svg>
+              <Upload />
               {reuploading ? 'Analysing new resume…' : 'Re-upload Resume'}
             </button>
 
+            
             <button
-              className="action-btn primary"
-              onClick={() => getResumePdf(interviewId)}
-              disabled={loading || reuploading}
+              className="action-btn ghost"
+              type="button"
+              title="Edit the name of interview report"
+              onClick={() => renameReport(report)}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
-                <path d="M10.6144 17.7956 11.492 15.7854C12.2731 13.9966 13.6789 12.5726 15.4325 11.7942L17.8482 10.7219C18.6162 10.381 18.6162 9.26368 17.8482 8.92277L15.5079 7.88394C13.7092 7.08552 12.2782 5.60881 11.5105 3.75894L10.6215 1.61673C10.2916.821765 9.19319.821767 8.8633 1.61673L7.97427 3.75892C7.20657 5.60881 5.77553 7.08552 3.97685 7.88394L1.63658 8.92277C.868537 9.26368.868536 10.381 1.63658 10.7219L4.0523 11.7942C5.80589 12.5726 7.21171 13.9966 7.99275 15.7854L8.8704 17.7956C9.20776 18.5682 10.277 18.5682 10.6144 17.7956ZM19.4014 22.6899 19.6482 22.1242C20.0882 21.1156 20.8807 20.3125 21.8695 19.8732L22.6299 19.5353C23.0412 19.3526 23.0412 18.7549 22.6299 18.5722L21.9121 18.2532C20.8978 17.8026 20.0911 16.9698 19.6586 15.9269L19.4052 15.3156C19.2285 14.8896 18.6395 14.8896 18.4628 15.3156L18.2094 15.9269C17.777 16.9698 16.9703 17.8026 15.956 18.2532L15.2381 18.5722C14.8269 18.7549 14.8269 19.3526 15.2381 19.5353L15.9985 19.8732C16.9874 20.3125 17.7798 21.1156 18.2198 22.1242L18.4667 22.6899C18.6473 23.104 19.2207 23.104 19.4014 22.6899Z"></path>
-              </svg>
-              {loading && !reuploading ? 'Downloading…' : 'Download Resume'}
+              <SquarePen />
             </button>
-
-            <button className="action-btn ghost" onClick={handleLogout}>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
-                <path d="M4 18H6V20H18V4H6V6H4V3C4 2.44772 4.44772 2 5 2H19C19.5523 2 20 2.44772 20 3V21C20 21.5523 19.5523 22 19 22H5C4.44772 22 4 21.5523 4 21V18ZM6 11H13V13H6V16L1 12L6 8V11Z"></path>
-              </svg>
-              Logout
+            <button
+              type="button"
+              className="action-btn ghost"
+              title="Delete the interview report"
+              onClick={() => removeReport(report)}
+            >
+              <Trash />
             </button>
           </div>
         </header>
@@ -238,11 +295,14 @@ export const Interview = () => {
         {reuploading && (
           <div className="page-notice info">
             <div className="mini-spinner" aria-hidden="true"></div>
-            Analysing your new resume against the same job description. This can take up to a minute…
+            Analysing your new resume against the same job description. This can
+            take up to a minute…
           </div>
         )}
         {reuploadError && !reuploading && (
-          <div className="page-notice error" role="alert">{reuploadError}</div>
+          <div className="page-notice error" role="alert">
+            {reuploadError}
+          </div>
         )}
 
         <section className="summary-row">
@@ -253,7 +313,8 @@ export const Interview = () => {
               <strong>{fitLabel}</strong>
               {evidence && checklist.length > 0 && (
                 <p>
-                  {matchedCount} of {checklist.length} job skills found in your resume
+                  {matchedCount} of {checklist.length} job skills found in your
+                  resume
                 </p>
               )}
             </div>
@@ -269,7 +330,9 @@ export const Interview = () => {
               </div>
 
               {checklist.length === 0 ? (
-                <p className="match-empty">No recognised skills found in the job description.</p>
+                <p className="match-empty">
+                  No recognised skills found in the job description.
+                </p>
               ) : (
                 <ul className="match-checklist">
                   {checklist.map((item) => (
@@ -287,9 +350,13 @@ export const Interview = () => {
                       </span>
                       <span className="check-skill">{item.skill}</span>
                       {item.matched ? (
-                        <span className="check-tag">{item.required ? 'Required' : 'Nice to have'}</span>
+                        <span className="check-tag">
+                          {item.required ? 'Required' : 'Nice to have'}
+                        </span>
                       ) : (
-                        <span className={`severity ${priorityFor(item.weight)}`}>
+                        <span
+                          className={`severity ${priorityFor(item.weight)}`}
+                        >
                           {priorityFor(item.weight)}
                         </span>
                       )}
@@ -308,9 +375,12 @@ export const Interview = () => {
 
             {skillGaps.length === 0 ? (
               <div className="no-gaps">
-                <span className="check-icon" aria-hidden="true">✓</span>
+                <span className="check-icon" aria-hidden="true">
+                  ✓
+                </span>
                 <p>
-                  No skill gaps. {checklist.length > 0
+                  No skill gaps.{' '}
+                  {checklist.length > 0
                     ? `All ${checklist.length} skills in the job description were found in your resume.`
                     : 'No tracked skills were found in the job description.'}
                 </p>
@@ -323,10 +393,13 @@ export const Interview = () => {
                     <button
                       type="button"
                       className={`severity ${gap.severity}`}
-                      onClick={() => navigate(`/roadmaps?reportId=${report._id}`)}
-                      title={`Create a learning roadmap for ${gap.skill} and the other skill gaps`}
+                      onClick={() => openSkillRoadmap(gap.skill)}
+                      disabled={Boolean(creatingSkillRoadmap)}
+                      title={`Create a learning roadmap for ${gap.skill}`}
                     >
-                      {gap.severity} · roadmap
+                      {creatingSkillRoadmap === gap.skill
+                        ? 'Creating roadmap…'
+                        : `${gap.severity} · roadmap`}
                     </button>
                   </li>
                 ))}
@@ -460,37 +533,14 @@ export const Interview = () => {
                 Previous
               </button>
 
-              <button onClick={nextItem} disabled={selectedIndex >= activeList.length - 1}>
+              <button
+                onClick={nextItem}
+                disabled={selectedIndex >= activeList.length - 1}
+              >
                 Next
               </button>
             </div>
           </section>
-
-          <aside className="skill-panel">
-            <div>
-              <h3>Skill Gaps</h3>
-              <p className="score-explanation">Score uses weighted, evidence-based skill coverage.</p>
-              <div className="skills">
-                {skillGaps.length ? (
-                  skillGaps.map((skill, index) => (
-                    <div className="skill-card" key={index}>
-                      <span>{skill.skill}</span>
-                      <small className={`severity ${skill.severity}`}>
-                        {skill.severity}
-                      </small>
-                    </div>
-                  ))
-                ) : (
-                  <div className="skill-card">
-                    <span>
-                      No major skill gaps were flagged in this report.
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-            {evidence?.length ? <div className="evidence-list"><h3>Match evidence</h3>{evidence.map((requirement) => <div className="evidence-card" key={requirement.skill}><strong>{requirement.skill}</strong><small>{requirement.matched ? 'Found in profile' : 'Not found in profile'} · weight {requirement.weight}</small><p>{requirement.candidateEvidence || requirement.jobEvidence}</p></div>)}</div> : null}
-          </aside>
         </div>
       </div>
     </main>

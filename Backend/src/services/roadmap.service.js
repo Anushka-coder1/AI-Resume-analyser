@@ -32,20 +32,37 @@ async function createAnalysisFromReport({ userId, reportId }) {
   }
 
   let analysis = await Analysis.findOne({ userId, sourceReportId: report._id })
-  if (analysis) return analysis
+  if (!analysis) {
+    analysis = await Analysis.create({
+      userId,
+      sourceReportId: report._id,
+      resumeMetadata: { extractedTextAvailable: Boolean(report.resume) },
+      jobDescription: report.jobDescription,
+      targetRole: report.title,
+      overallMatchScore: report.matchScore ?? 0,
+      analysisStatus: 'completed',
+    })
+  }
 
-  analysis = await Analysis.create({
-    userId,
-    sourceReportId: report._id,
-    resumeMetadata: { extractedTextAvailable: Boolean(report.resume) },
-    jobDescription: report.jobDescription,
-    targetRole: report.title,
-    overallMatchScore: report.matchScore ?? 0,
-    analysisStatus: 'completed',
-  })
-
+  // Reports created before requirementEvidence existed still contain skillGaps.
+  // Synchronize either source every time so an existing empty analysis is repaired.
   const evidence = report.requirementEvidence || []
-  const gaps = await Promise.all(evidence.map(async (item) => {
+  const sourceGaps = evidence.length
+    ? evidence.map((item) => ({
+      skill: item.skill,
+      weight: item.weight,
+      matched: item.matched,
+      jobEvidence: item.jobEvidence,
+      candidateEvidence: item.candidateEvidence,
+    }))
+    : (report.skillGaps || []).map((item) => ({
+      skill: item.skill,
+      weight: item.severity === 'high' ? 5 : item.severity === 'medium' ? 3 : 1,
+      matched: false,
+      jobEvidence: 'Marked as a skill gap in the interview report.',
+      candidateEvidence: null,
+    }))
+  const gaps = await Promise.all(sourceGaps.map(async (item) => {
     const skill = await resolveSkill(item.skill)
     const importance = priorityFor(item.weight)
     return {
@@ -62,7 +79,11 @@ async function createAnalysisFromReport({ userId, reportId }) {
         : (item.candidateEvidence || item.jobEvidence || 'This requirement was not found in the candidate profile.'),
     }
   }))
-  if (gaps.length) await SkillGap.insertMany(gaps, { ordered: false })
+  await Promise.all(gaps.map((gap) => SkillGap.findOneAndUpdate(
+    { analysisId: analysis._id, skillName: gap.skillName },
+    { $set: gap },
+    { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true },
+  )))
   return analysis
 }
 
@@ -177,6 +198,36 @@ function buildSchedule({ content, dailyStudyHours, durationInDays, startDate, co
   return tasks
 }
 
+function buildAiSchedule({ topics, dailyStudyHours, durationInDays, startDate }) {
+  const tasks = []
+  let dayNumber = 1
+  let remainingToday = dailyStudyHours
+  for (const topic of topics) {
+    let remainingHours = topic.estimatedHours
+    let part = 1
+    while (remainingHours > 0 && dayNumber <= durationInDays) {
+      const allocation = Math.min(remainingHours, remainingToday)
+      if (allocation <= 0) { dayNumber += 1; remainingToday = dailyStudyHours; continue }
+      tasks.push({
+        skillId: null,
+        topicId: null,
+        title: remainingHours > allocation ? `${topic.title} (part ${part})` : topic.title,
+        description: topic.description,
+        dayNumber,
+        scheduledDate: dayAt(startDate, dayNumber),
+        estimatedHours: Number(allocation.toFixed(2)),
+        resources: topic.resources,
+        projectReference: null,
+      })
+      part += 1
+      remainingHours = Number((remainingHours - allocation).toFixed(2))
+      remainingToday = Number((remainingToday - allocation).toFixed(2))
+      if (remainingToday <= 0) { dayNumber += 1; remainingToday = dailyStudyHours }
+    }
+  }
+  return tasks
+}
+
 async function calculateProgress(roadmapId) {
   const tasks = await RoadmapProgress.find({ roadmapId }).select('status estimatedHours timeSpent skillId')
   const totalTasks = tasks.length
@@ -205,19 +256,69 @@ async function calculateProgress(roadmapId) {
   return { totalTasks, completedTasks: completed.length, pendingTasks: tasks.filter((task) => task.status === 'pending').length, estimatedHours, timeSpent, overallProgress, skillWise, weekly: [...weekly.values()] }
 }
 
-async function generateRoadmap({ userId, analysisId, reportId, durationInDays = 28, dailyStudyHours = 2, startDate = new Date() }) {
+async function generateRoadmap({ userId, analysisId, reportId, skillName, durationInDays = 28, dailyStudyHours = 2, startDate = new Date() }) {
   const analysis = await getOwnedAnalysis({ userId, analysisId, reportId })
-  const gaps = await SkillGap.find({ analysisId: analysis._id, gapStatus: { $in: ['missing', 'partial', 'needs_verification'] } })
-  const content = await loadLearningContent(gaps)
+  let gaps = await SkillGap.find({ analysisId: analysis._id, gapStatus: { $in: ['missing', 'partial', 'needs_verification'] } })
+  if (skillName) {
+    const selectedName = normalise(skillName)
+    const selectedSkill = await resolveSkill(skillName)
+    gaps = gaps.filter((gap) => normalise(gap.skillName) === selectedName || (selectedSkill && String(gap.skillId) === String(selectedSkill._id)))
+    if (!gaps.length) {
+      const error = new Error('This skill is not an active learning gap in the selected analysis')
+      error.statusCode = 404
+      throw error
+    }
+    const existingRoadmap = await Roadmap.findOne({
+      userId,
+      analysisId: analysis._id,
+      status: { $ne: 'archived' },
+      skillsToLearn: { $elemMatch: { name: gaps[0].skillName, learningPathStatus: 'ai_generated' } },
+    }).sort({ createdAt: -1 })
+    if (existingRoadmap) {
+      return { roadmap: existingRoadmap, progress: await calculateProgress(existingRoadmap._id), unavailableSkills: [], existing: true }
+    }
+  }
   const safeDuration = Math.min(Math.max(Number(durationInDays) || 28, 1), 365)
   const safeHours = Math.min(Math.max(Number(dailyStudyHours) || 2, 0.25), 16)
   const safeStartDate = new Date(startDate)
   if (Number.isNaN(safeStartDate.getTime())) throw new Error('Invalid start date')
+
+  if (skillName) {
+    const { generateSkillGapRoadmap } = require('./ai.service')
+    const plan = await generateSkillGapRoadmap({
+      skillName: gaps[0].skillName,
+      targetRole: analysis.targetRole,
+      jobDescription: analysis.jobDescription,
+      durationInDays: safeDuration,
+      dailyStudyHours: safeHours,
+    })
+    const roadmap = await Roadmap.create({
+      userId,
+      analysisId: analysis._id,
+      title: plan.title,
+      targetRole: analysis.targetRole,
+      durationInDays: safeDuration,
+      dailyStudyHours: safeHours,
+      startDate: safeStartDate,
+      targetDate: dayAt(safeStartDate, safeDuration),
+      skillsToLearn: [{ skillId: null, name: gaps[0].skillName, importance: gaps[0].importance, gapStatus: gaps[0].gapStatus, learningPathStatus: 'ai_generated' }],
+      learningPathVersions: [],
+    })
+    const tasks = buildAiSchedule({ topics: plan.topics, dailyStudyHours: safeHours, durationInDays: safeDuration, startDate: safeStartDate })
+      .map((task) => ({ ...task, roadmapId: roadmap._id, userId }))
+    if (tasks.length) await RoadmapProgress.insertMany(tasks)
+    const progress = await calculateProgress(roadmap._id)
+    roadmap.overallProgress = progress.overallProgress
+    await roadmap.save()
+    return { roadmap, progress, unavailableSkills: [] }
+  }
+
+  const content = await loadLearningContent(gaps)
   const skillsToLearn = content.map(({ gap, skill, path }) => ({ skillId: skill?._id || null, name: gap.skillName, importance: gap.importance, gapStatus: gap.gapStatus, learningPathStatus: path ? 'available' : 'requires_learning_path' }))
   const roadmap = await Roadmap.create({
     userId,
     analysisId: analysis._id,
-    title: `${analysis.targetRole} learning roadmap`,
+    title: skillName ? `${gaps[0].skillName} learning roadmap` : `${analysis.targetRole} learning roadmap`,
     targetRole: analysis.targetRole,
     durationInDays: safeDuration,
     dailyStudyHours: safeHours,
@@ -266,12 +367,24 @@ async function regenerateRoadmap({ userId, roadmapId, durationInDays, dailyStudy
   const completedTasks = await RoadmapProgress.find({ roadmapId, userId, status: 'completed' }).select('topicId')
   const completedTopicIds = new Set(completedTasks.filter((task) => task.topicId).map((task) => String(task.topicId)))
   await RoadmapProgress.deleteMany({ roadmapId, userId, status: { $ne: 'completed' } })
-  const gaps = await SkillGap.find({ analysisId: roadmap.analysisId, gapStatus: { $in: ['missing', 'partial', 'needs_verification'] } })
-  const content = await loadLearningContent(gaps)
+  const isAiRoadmap = roadmap.skillsToLearn.some((skill) => skill.learningPathStatus === 'ai_generated')
   roadmap.durationInDays = Math.min(Math.max(Number(durationInDays) || roadmap.durationInDays, 1), 365)
   roadmap.dailyStudyHours = Math.min(Math.max(Number(dailyStudyHours) || roadmap.dailyStudyHours, 0.25), 16)
   roadmap.startDate = new Date()
   roadmap.targetDate = dayAt(roadmap.startDate, roadmap.durationInDays)
+  if (isAiRoadmap) {
+    const analysis = await Analysis.findOne({ _id: roadmap.analysisId, userId })
+    const { generateSkillGapRoadmap } = require('./ai.service')
+    const plan = await generateSkillGapRoadmap({ skillName: roadmap.skillsToLearn[0].name, targetRole: roadmap.targetRole, jobDescription: analysis.jobDescription, durationInDays: roadmap.durationInDays, dailyStudyHours: roadmap.dailyStudyHours })
+    const tasks = buildAiSchedule({ topics: plan.topics, dailyStudyHours: roadmap.dailyStudyHours, durationInDays: roadmap.durationInDays, startDate: roadmap.startDate }).map((task) => ({ ...task, roadmapId: roadmap._id, userId }))
+    if (tasks.length) await RoadmapProgress.insertMany(tasks)
+    const progress = await calculateProgress(roadmap._id)
+    roadmap.overallProgress = progress.overallProgress
+    await roadmap.save()
+    return { roadmap, progress }
+  }
+  const gaps = await SkillGap.find({ analysisId: roadmap.analysisId, gapStatus: { $in: ['missing', 'partial', 'needs_verification'] } })
+  const content = await loadLearningContent(gaps)
   const tasks = buildSchedule({ content, dailyStudyHours: roadmap.dailyStudyHours, durationInDays: roadmap.durationInDays, startDate: roadmap.startDate, completedTopicIds }).map((task) => ({ ...task, roadmapId: roadmap._id, userId }))
   if (tasks.length) await RoadmapProgress.insertMany(tasks)
   const progress = await calculateProgress(roadmap._id)
@@ -280,4 +393,41 @@ async function regenerateRoadmap({ userId, roadmapId, durationInDays, dailyStudy
   return { roadmap, progress }
 }
 
-module.exports = { createAnalysisFromReport, generateRoadmap, getRoadmapDetails, updateTask, regenerateRoadmap, calculateProgress, resolveSkill, orderTopics, buildSchedule }
+async function updateRoadmapMetadata({ userId, roadmapId, title, startDate, targetDate, durationInDays }) {
+  const roadmap = await Roadmap.findOne({ _id: roadmapId, userId })
+  if (!roadmap) { const error = new Error('Roadmap not found'); error.statusCode = 404; throw error }
+  if (title !== undefined) {
+    if (!String(title).trim() || String(title).trim().length > 140) throw new Error('Roadmap name must be between 1 and 140 characters')
+    roadmap.title = String(title).trim()
+  }
+  if (startDate !== undefined) {
+    const date = new Date(startDate)
+    if (Number.isNaN(date.getTime())) throw new Error('Invalid start date')
+    roadmap.startDate = date
+  }
+  if (targetDate !== undefined) {
+    const date = new Date(targetDate)
+    if (Number.isNaN(date.getTime())) throw new Error('Invalid target date')
+    roadmap.targetDate = date
+  }
+  if (durationInDays !== undefined) {
+    const days = Number(durationInDays)
+    if (!Number.isInteger(days) || days < 1 || days > 365) throw new Error('Duration must be between 1 and 365 days')
+    roadmap.durationInDays = days
+    if (targetDate === undefined) roadmap.targetDate = dayAt(roadmap.startDate, days)
+  } else if (startDate !== undefined && targetDate !== undefined) {
+    const days = Math.ceil((roadmap.targetDate - roadmap.startDate) / 86400000) + 1
+    if (days < 1 || days > 365) throw new Error('Target date must be within 365 days of the start date')
+    roadmap.durationInDays = days
+  }
+  await roadmap.save()
+  return roadmap
+}
+
+async function deleteRoadmap({ userId, roadmapId }) {
+  const roadmap = await Roadmap.findOneAndDelete({ _id: roadmapId, userId })
+  if (!roadmap) { const error = new Error('Roadmap not found'); error.statusCode = 404; throw error }
+  await RoadmapProgress.deleteMany({ roadmapId, userId })
+}
+
+module.exports = { createAnalysisFromReport, generateRoadmap, getRoadmapDetails, updateTask, regenerateRoadmap, updateRoadmapMetadata, deleteRoadmap, calculateProgress, resolveSkill, orderTopics, buildSchedule, buildAiSchedule }

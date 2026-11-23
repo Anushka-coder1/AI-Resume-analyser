@@ -5,8 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "jest",
-    "dev": "npx nodemon server.js",
-    "seed:learning": "node scripts/seed-learning-knowledge.js"
+    "dev": "npx nodemon server.js"
   },
   "jest": {
     "setupFilesAfterEnv": [

@@ -201,7 +201,7 @@ Requirements
           </div>
         </section>
 
-        <section className="history-panel">
+        {/* <section className="history-panel">
           <div className="history-header">
             <h2>Recent reports</h2>
             <p>Jump back into previous interview prep sessions.</p>
@@ -233,7 +233,7 @@ Requirements
             )}
           </div>
           {nextReportCursor ? <button type="button" className="load-more" onClick={loadMoreReports} disabled={loading}>Load more reports</button> : null}
-        </section>
+        </section> */}
 
         <footer className="footer">
           <span>Sharper prep, cleaner feedback, faster iterations.</span>

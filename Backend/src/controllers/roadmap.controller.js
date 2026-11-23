@@ -48,4 +48,14 @@ async function regenerateRoadmapController(req, res) {
   catch (error) { return sendError(res, error) }
 }
 
-module.exports = { generateRoadmapController, listRoadmapsController, getRoadmapController, getProgressController, updateTaskController, updateTaskTimeController, regenerateRoadmapController }
+async function updateRoadmapController(req, res) {
+  try { return res.status(200).json({ roadmap: await roadmapService.updateRoadmapMetadata({ userId: req.user.id, roadmapId: req.params.id, ...req.body }) }) }
+  catch (error) { return sendError(res, error) }
+}
+
+async function deleteRoadmapController(req, res) {
+  try { await roadmapService.deleteRoadmap({ userId: req.user.id, roadmapId: req.params.id }); return res.status(204).send() }
+  catch (error) { return sendError(res, error) }
+}
+
+module.exports = { generateRoadmapController, listRoadmapsController, getRoadmapController, getProgressController, updateTaskController, updateTaskTimeController, regenerateRoadmapController, updateRoadmapController, deleteRoadmapController }
