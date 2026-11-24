@@ -50,24 +50,26 @@ export const CommunityFeed = () => {
       <div className="experience-orb experience-orb-one" />
       <div className="experience-orb experience-orb-two" />
       <div className="experiences-container">
-        <nav className="community-nav">
-          
-          <button
-            type="button"
-            className="add-experience-button"
-            onClick={() => navigate('/experiences/new')}
-          >
-            + Add experience
-          </button>
-        </nav>
-        <header className="community-hero community-hero--compact">
-          <p className="community-eyebrow">Interview community</p>
-          <h1>Learn from real interview experiences.</h1>
-          <p>
-            Browse shared interview stories, then open any post for its complete
-            experience and AI-organized round breakdown.
-          </p>
-        </header>
+        <div className="community-header">
+          <header className="community-hero community-hero--compact">
+            <p className="community-eyebrow">Interview community</p>
+            <h1>Learn from real interview experiences.</h1>
+            <p>
+              Browse shared interview stories, then open any post for its
+              complete experience and AI-organized round breakdown.
+            </p>
+          </header>
+
+          <nav className="community-nav">
+            <button
+              type="button"
+              className="add-experience-button"
+              onClick={() => navigate('/experiences/new')}
+            >
+              + Add experience
+            </button>
+          </nav>
+        </div>
         <section className="feed-section feed-section--full">
           <div className="feed-heading">
             <div>
@@ -106,14 +108,14 @@ export const CommunityFeed = () => {
                       <p className="post-copy post-copy--preview">
                         {post.experience}
                       </p>
+                      <button
+                        type="button"
+                        className="read-more-button"
+                        onClick={() => navigate(`/experiences/${post._id}`)}
+                      >
+                        ...read more
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      className="read-more-button"
-                      onClick={() => navigate(`/experiences/${post._id}`)}
-                    >
-                      Read more →
-                    </button>
                   </article>
                 ))}
               </div>

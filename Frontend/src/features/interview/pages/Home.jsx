@@ -73,6 +73,9 @@ export const Home = () => {
       <div className="home-container">
         <section className="hero">
           <p className="badge">Personalized interview prep</p>
+          {/* <nav className="community-nav">
+            <span>Personalized interview prep</span>
+          </nav> */}
           <h1>
             Turn any job post into a <span>focused interview plan</span>
           </h1>
