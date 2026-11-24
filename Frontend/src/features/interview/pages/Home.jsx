@@ -4,7 +4,14 @@ import { useNavigate } from 'react-router-dom'
 import { useInterview } from '../hooks/useInterview'
 
 export const Home = () => {
-  const { loading, error, reports, nextReportCursor, generateReport, getReports } = useInterview()
+  const {
+    loading,
+    error,
+    reports,
+    nextReportCursor,
+    generateReport,
+    getReports,
+  } = useInterview()
   const [jobDescription, setJobDescription] = useState('')
   const [selfDescription, setSelfDescription] = useState('')
   const [localError, setLocalError] = useState('')
@@ -54,15 +61,15 @@ export const Home = () => {
   const activeError = localError || error
 
   const loadMoreReports = () => {
-    if (nextReportCursor) getReports({ cursor: nextReportCursor }).catch(() => {})
+    if (nextReportCursor)
+      getReports({ cursor: nextReportCursor }).catch(() => {})
   }
 
   return (
     <main className="home">
       <div className="bg-circle bg-circle-1"></div>
       <div className="bg-circle bg-circle-2"></div>
-      
-      
+
       <div className="home-container">
         <section className="hero">
           <p className="badge">Personalized interview prep</p>
@@ -79,11 +86,41 @@ export const Home = () => {
         <section className="main-card">
           <div className="left-panel">
             <div className="section-header">
-              <div className="section-icon">JD</div>
+              <div className="section-icon">CV</div>
               <div>
                 <h3>Target Job Description</h3>
-                <p>Paste the role details you want to prepare for.</p>
+                <p>Upload your role details you want to prepare for..</p>
               </div>
+            </div>
+
+            <div className="upload-section job-description-upload">
+              <label htmlFor="jobDescriptionFile">
+                Upload Job Description <span>(Recommended)</span>
+              </label>
+              <label
+                htmlFor="jobDescriptionFile"
+                className="upload-box upload-box--compact"
+              >
+                <div className="upload-icon">JD</div>
+                <h4>
+                  {jobDescriptionFileName || 'Choose a job description file'}
+                </h4>
+                <p>PDF only, max 3 MB</p>
+                <small>Its text is combined with anything pasted above.</small>
+              </label>
+              <input
+                ref={jobDescriptionInputRef}
+                type="file"
+                id="jobDescriptionFile"
+                accept=".pdf,application/pdf"
+                onChange={(e) =>
+                  setJobDescriptionFileName(e.target.files?.[0]?.name || '')
+                }
+              />
+            </div>
+
+            <div className="divider">
+              <span>OR</span>
             </div>
 
             <textarea
@@ -108,17 +145,6 @@ Requirements
 
             <div className="character-count">
               {jobDescription.length} characters
-            </div>
-
-            <div className="upload-section job-description-upload">
-              <label htmlFor="jobDescriptionFile">Upload Job Description <span>(Optional)</span></label>
-              <label htmlFor="jobDescriptionFile" className="upload-box upload-box--compact">
-                <div className="upload-icon">JD</div>
-                <h4>{jobDescriptionFileName || 'Choose a job description file'}</h4>
-                <p>PDF only, max 3 MB</p>
-                <small>Its text is combined with anything pasted above.</small>
-              </label>
-              <input ref={jobDescriptionInputRef} type="file" id="jobDescriptionFile" accept=".pdf,application/pdf" onChange={(e) => setJobDescriptionFileName(e.target.files?.[0]?.name || '')} />
             </div>
           </div>
 

@@ -1,6 +1,6 @@
 const mongoose = require('mongoose')
 const { PDFParse } = require('pdf-parse')
-const {generateInterviewReport , generateResumePdf} = require('../services/ai.service')
+const { generateInterviewReport, generateResumePdf } = require('../services/ai.service')
 const interviewReportModel = require('../models/interview.model')
 const { analyseSkillMatch } = require('../services/skill-matching.service')
 const { Analysis, Roadmap, RoadmapProgress, SkillGap } = require('../models/roadmap.model')
@@ -238,26 +238,26 @@ async function getAllInterviewReportaController(req, res) {
 /**
  * @description Controller to generate pdf report based on user self description , resume and job description
  */
-async function generateResumePdfController(req,res){
-  const {interviewReportId} = req.params
+async function generateResumePdfController(req, res) {
+  const { interviewReportId } = req.params
   const interviewReport = await interviewReportModel.findOne({
     _id: interviewReportId,
     user: req.user.id,
   })
 
-  if(!interviewReport){
+  if (!interviewReport) {
     return res.status(404).json({
-      message:"Interview Report Not Found."
+      message: "Interview Report Not Found."
     })
   }
 
-  const {resume , jobDescription , selfDescription} = interviewReport
+  const { resume, jobDescription, selfDescription } = interviewReport
 
-  const pdfBuffer = await generateResumePdf({resume ,jobDescription , selfDescription })
+  const pdfBuffer = await generateResumePdf({ resume, jobDescription, selfDescription })
 
   res.set({
-    "Content-Type" : "application/pdf",
-    "Content-Disposition":`attachment;filename = resume_${interviewReportId}.pdf`
+    "Content-Type": "application/pdf",
+    "Content-Disposition": `attachment;filename = resume_${interviewReportId}.pdf`
   })
 
   return res.send(pdfBuffer);
@@ -266,7 +266,7 @@ async function generateResumePdfController(req,res){
 async function renameInterviewReportController(req, res) {
   const title = String(req.body.title || '').trim()
   if (!title || title.length > 140) return res.status(400).json({ message: 'Interview name must be between 1 and 140 characters' })
-  const report = await interviewReportModel.findOneAndUpdate({ _id: req.params.interviewId, user: req.user.id }, { $set: { title } }, { new: true })
+  const report = await interviewReportModel.findOneAndUpdate({ _id: req.params.interviewId, user: req.user.id }, { $set: { title } }, { returnDocument: 'after' })
   if (!report) return res.status(404).json({ message: 'Interview report not found' })
   return res.status(200).json({ interviewReport: report })
 }
