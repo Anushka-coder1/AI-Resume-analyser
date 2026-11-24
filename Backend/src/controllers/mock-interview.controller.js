@@ -9,6 +9,8 @@ const {
   toPublicSession,
   normaliseMode,
   normaliseCount,
+  normaliseTimeLimit,
+  normaliseTimeTaken,
 } = require('../services/mock-interview.service')
 
 function currentTurn(session) {
@@ -75,6 +77,7 @@ async function startMockInterviewController(req, res) {
     report: report._id,
     title: report.title,
     mode,
+    timeLimitSeconds: normaliseTimeLimit(req.body?.timeLimitSeconds),
     pendingQuestions: rest,
     turns: [{ ...first, askedAt: new Date() }],
   })
@@ -103,6 +106,8 @@ async function answerMockInterviewController(req, res) {
 
   const skip = req.body?.skip === true
   const answer = String(req.body?.answer || '').trim()
+  const inputMode = req.body?.inputMode === 'voice' ? 'voice' : 'text'
+  const timeTakenSeconds = normaliseTimeTaken(req.body?.timeTakenSeconds)
   if (!skip && !answer) {
     return res.status(400).json({ message: 'Type or speak an answer, or skip the question' })
   }
@@ -129,6 +134,7 @@ async function answerMockInterviewController(req, res) {
       modelAnswer: turn.modelAnswer,
       userAnswer: answer,
       isFollowUp: turn.isFollowUp,
+      inputMode,
     })
   }
 
@@ -140,6 +146,8 @@ async function answerMockInterviewController(req, res) {
     feedback: evaluation.feedback,
     improvedAnswer: evaluation.improvedAnswer,
     evaluatedBy: evaluation.evaluatedBy,
+    inputMode: skip ? 'text' : inputMode,
+    timeTakenSeconds,
     answeredAt: new Date(),
   })
 

@@ -5,7 +5,18 @@
 
 const MODES = ['technical', 'behavioral', 'mixed']
 const ALLOWED_COUNTS = [3, 5, 8, 10]
+const ALLOWED_TIME_LIMITS = [0, 60, 120, 180]
 const MAX_ANSWER_LENGTH = 4000
+
+function normaliseTimeLimit(value) {
+  const seconds = Number.parseInt(value, 10)
+  return ALLOWED_TIME_LIMITS.includes(seconds) ? seconds : 0
+}
+
+function normaliseTimeTaken(value) {
+  const seconds = Number(value)
+  return Number.isFinite(seconds) && seconds >= 0 ? Math.min(Math.round(seconds), 3600) : null
+}
 
 const STOP_WORDS = new Set([
   'the', 'and', 'for', 'with', 'that', 'this', 'from', 'your', 'you', 'are', 'was', 'were', 'have', 'has',
@@ -82,7 +93,7 @@ const STAR_PATTERNS = {
  * keywords with the model answer and intention, and looks at length and
  * (for behavioral questions) STAR structure.
  */
-function fallbackEvaluate({ type, intention, modelAnswer, userAnswer }) {
+function fallbackEvaluate({ type, intention, modelAnswer, userAnswer, inputMode = 'text' }) {
   const answer = String(userAnswer || '').trim()
   const words = answer ? answer.split(/\s+/).length : 0
 
@@ -105,7 +116,9 @@ function fallbackEvaluate({ type, intention, modelAnswer, userAnswer }) {
 
   const relevance = clamp(2 + coverage * 10)
   const depth = clamp(Math.min(words / 12, 6) + coverage * 5)
-  const sentences = answer.split(/[.!?]+/).filter((s) => s.trim().split(/\s+/).length >= 3).length
+  const punctuated = answer.split(/[.!?]+/).filter((s) => s.trim().split(/\s+/).length >= 3).length
+  // Speech transcripts have little punctuation; estimate sentences from length instead.
+  const sentences = inputMode === 'voice' ? Math.max(punctuated, Math.round(words / 15)) : punctuated
 
   let structure
   let starMissing = []
@@ -209,6 +222,7 @@ function toPublicSession(session) {
     title: doc.title,
     mode: doc.mode,
     status: doc.status,
+    timeLimitSeconds: doc.timeLimitSeconds || 0,
     turns,
     totalQuestions: (doc.turns || []).filter((t) => !t.isFollowUp).length + (doc.pendingQuestions || []).length,
     remainingQuestions: (doc.pendingQuestions || []).length,
@@ -222,7 +236,10 @@ function toPublicSession(session) {
 module.exports = {
   MODES,
   ALLOWED_COUNTS,
+  ALLOWED_TIME_LIMITS,
   MAX_ANSWER_LENGTH,
+  normaliseTimeLimit,
+  normaliseTimeTaken,
   pickQuestions,
   fallbackEvaluate,
   computeOverallScore,

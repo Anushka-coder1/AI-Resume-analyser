@@ -27,6 +27,8 @@ const turnSchema = new mongoose.Schema({
   feedback: { type: String, default: '' },
   improvedAnswer: { type: String, default: '' },
   evaluatedBy: { type: String, enum: ['ai', 'fallback', 'none'], default: 'none' },
+  inputMode: { type: String, enum: ['text', 'voice'], default: 'text' },
+  timeTakenSeconds: { type: Number, min: 0, default: null },
   askedAt: { type: Date, default: Date.now },
   answeredAt: { type: Date, default: null },
 }, { _id: false })
@@ -37,6 +39,8 @@ const mockInterviewSchema = new mongoose.Schema({
   title: { type: String, default: 'Mock Interview' },
   mode: { type: String, enum: ['technical', 'behavioral', 'mixed'], default: 'mixed' },
   status: { type: String, enum: ['in_progress', 'completed'], default: 'in_progress' },
+  // Per-question time limit shown as a countdown in the UI. 0 = no timer.
+  timeLimitSeconds: { type: Number, default: 0 },
   // Main questions still waiting to be asked, in order.
   pendingQuestions: [questionSchema],
   turns: [turnSchema],

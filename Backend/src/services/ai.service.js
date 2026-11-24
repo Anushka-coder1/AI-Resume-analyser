@@ -1054,11 +1054,11 @@ const mockSummarySchema = z.object({
 
 const clampScore = (value) => Math.min(10, Math.max(0, Math.round(Number(value) || 0)))
 
-async function evaluateMockAnswer({ question, type, intention, modelAnswer, userAnswer, isFollowUp = false }) {
+async function evaluateMockAnswer({ question, type, intention, modelAnswer, userAnswer, isFollowUp = false, inputMode = 'text' }) {
   const answer = String(userAnswer || '').trim()
   // Too-short answers don't need an AI call.
   if (!ai || answer.split(/\s+/).filter(Boolean).length < 5) {
-    return fallbackEvaluate({ type, intention, modelAnswer, userAnswer: answer })
+    return fallbackEvaluate({ type, intention, modelAnswer, userAnswer: answer, inputMode })
   }
 
   const prompt = `You are a fair but demanding interviewer grading one answer in a mock ${type} interview.
@@ -1076,7 +1076,8 @@ Grading rules:
 - Score 0-10 overall and per criterion. 9-10 = excellent, 7-8 = good, 5-6 = partial, 3-4 = weak, 0-2 = off-topic or wrong.
 - Judge against the reference points, but give credit for correct points that are not listed.
 - For behavioral questions, check for Situation, Task, Action and Result.
-- Feedback must reference what the candidate actually said.
+- Feedback must reference what the candidate actually said.${inputMode === 'voice' ? `
+- The answer was spoken and transcribed by speech recognition. Do not penalise missing punctuation, filler words or obvious transcription mistakes; judge the content and how it would sound spoken.` : ''}
 - Only set needsFollowUp when the answer is vague, incomplete or partly wrong${isFollowUp ? '. This is already a follow-up, so set needsFollowUp to false' : ''}.
 - Return only JSON matching the schema.`
 
@@ -1104,7 +1105,7 @@ Grading rules:
     }
   } catch (error) {
     console.error('Mock answer evaluation error:', error)
-    return fallbackEvaluate({ type, intention, modelAnswer, userAnswer: answer })
+    return fallbackEvaluate({ type, intention, modelAnswer, userAnswer: answer, inputMode })
   }
 }
 
