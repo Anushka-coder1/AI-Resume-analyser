@@ -1,0 +1,143 @@
+$primary: #e14b33;
+$primary-light: #ff9a73;
+$surface: #101b26;
+$surface-light: #182734;
+$border: rgba(255, 255, 255, .08);
+$text: #f5f7fb;
+$text-secondary: #98a2b3;
+$good: #34d399;
+$ok: #fbbf24;
+$low: #f87171;
+
+.mock-page { background: linear-gradient(180deg, #09131d, #11202c); min-height: 100vh; overflow: hidden; padding: 40px 24px 72px; position: relative; color: $text; }
+.mock-page__glow { border-radius: 50%; filter: blur(130px); opacity: .15; position: absolute; pointer-events: none; }
+.mock-page__glow--one { background: $primary; height: 390px; left: -150px; top: -130px; width: 390px; }
+.mock-page__glow--two { background: #1b86ff; bottom: -180px; height: 480px; right: -180px; width: 480px; }
+.mock-container { margin: auto; max-width: 860px; position: relative; z-index: 1; }
+
+.mock-back { align-items: center; color: #ffd0c1; display: inline-flex; font-weight: 700; gap: 6px; margin-bottom: 28px; text-decoration: none; &:hover { color: #fff; } }
+.mock-eyebrow { align-items: center; color: $primary-light; display: inline-flex; font-size: .82rem; font-weight: 800; gap: 6px; letter-spacing: .08em; margin: 0 0 10px; text-transform: uppercase; }
+.mock-muted { color: $text-secondary; font-size: .9rem; line-height: 1.6; }
+.mock-error { background: rgba(248, 113, 113, .12); border: 1px solid rgba(248, 113, 113, .35); border-radius: 12px; color: #fecaca; margin-bottom: 18px; padding: 12px 16px; }
+
+.mock-header { margin-bottom: 28px;
+  h1 { font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1.1; margin: 0 0 14px; }
+  h1 span { background: linear-gradient(90deg, $primary-light, #ffcb7e, #65c8ff); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  p:not(.mock-eyebrow) { color: $text-secondary; line-height: 1.7; margin: 0; max-width: 680px; }
+}
+
+.mock-card { background: $surface; border: 1px solid $border; border-radius: 20px; box-shadow: 0 18px 40px rgba(0, 0, 0, .24); margin-bottom: 18px; padding: 24px;
+  h2 { font-size: 1.05rem; margin: 0 0 14px; }
+  h2:not(:first-child) { margin-top: 24px; }
+}
+
+.mock-modes { display: grid; gap: 12px; grid-template-columns: repeat(3, 1fr); }
+.mock-mode { background: $surface-light; border: 1px solid $border; border-radius: 14px; color: $text; cursor: pointer; display: flex; flex-direction: column; gap: 4px; padding: 14px; text-align: left; transition: border-color .15s, transform .15s;
+  span { color: $text-secondary; font-size: .85rem; }
+  &:hover { transform: translateY(-1px); }
+  &.is-active { border-color: $primary; box-shadow: 0 0 0 3px rgba(225, 75, 51, .18); }
+}
+.mock-counts, .mock-skills { display: flex; flex-wrap: wrap; gap: 10px; }
+.mock-chip { background: $surface-light; border: 1px solid $border; border-radius: 999px; color: $text; cursor: pointer; font-weight: 700; min-width: 48px; padding: 8px 16px; text-decoration: none;
+  &.is-active { background: $primary; border-color: $primary; }
+  &:disabled { cursor: not-allowed; opacity: .35; }
+  &.is-link:hover { border-color: $primary-light; color: #fff; }
+}
+
+.mock-button { align-items: center; border: 0; border-radius: 12px; cursor: pointer; display: inline-flex; font-weight: 800; gap: 8px; justify-content: center; padding: 12px 18px; text-decoration: none;
+  &:disabled { cursor: not-allowed; opacity: .55; }
+}
+.mock-button--primary { background: linear-gradient(135deg, $primary, #ff7a45); color: #fff; margin-top: 8px; }
+.mock-button--ghost { background: transparent; border: 1px solid $border; color: $text; &:hover:not(:disabled) { border-color: $primary-light; } }
+.mock-link { align-items: center; background: none; border: 0; color: $text-secondary; cursor: pointer; display: inline-flex; font-weight: 700; gap: 6px; &:hover:not(:disabled) { color: $low; } }
+
+.mock-history { list-style: none; margin: 0; padding: 0;
+  li + li { border-top: 1px solid $border; }
+  button { align-items: center; background: none; border: 0; color: $text; cursor: pointer; display: flex; justify-content: space-between; padding: 12px 4px; text-align: left; width: 100%; &:hover strong { color: $primary-light; } }
+}
+.mock-history__meta { display: flex; flex-direction: column; gap: 2px; span { color: $text-secondary; font-size: .85rem; } }
+.mock-score-pill { border-radius: 999px; display: inline-block; font-size: .8rem; font-weight: 800; padding: 3px 10px; white-space: nowrap;
+  &.good { background: rgba(52, 211, 153, .15); color: $good; }
+  &.ok { background: rgba(251, 191, 36, .15); color: $ok; }
+  &.low { background: rgba(248, 113, 113, .15); color: $low; }
+  &.resume { background: rgba(101, 200, 255, .15); color: #65c8ff; }
+}
+
+/* Live interview */
+.mock-progress { margin-bottom: 20px; }
+.mock-progress__label { align-items: center; color: $text-secondary; display: flex; font-size: .9rem; font-weight: 700; justify-content: space-between; margin-bottom: 8px; }
+.mock-bar { background: rgba(255, 255, 255, .08); border-radius: 999px; height: 6px; overflow: hidden; flex: 1;
+  > div { background: $primary-light; border-radius: inherit; height: 100%; transition: width .4s ease; }
+  > .good { background: $good; } > .ok { background: $ok; } > .low { background: $low; }
+}
+.mock-bar--large { height: 8px; > div { background: linear-gradient(90deg, $primary, $primary-light); } }
+
+.mock-chat { display: flex; flex-direction: column; gap: 14px; margin-bottom: 18px; }
+.mock-turn { display: flex; flex-direction: column; gap: 12px; }
+.mock-bubble { align-items: flex-start; display: flex; gap: 10px; max-width: 88%;
+  > div { border-radius: 16px; padding: 12px 16px; }
+  p { line-height: 1.6; margin: 0; white-space: pre-wrap; }
+}
+.mock-bubble--ai > div { background: $surface; border: 1px solid $border; border-top-left-radius: 4px; }
+.mock-bubble--user { align-self: flex-end; > div { background: rgba(225, 75, 51, .16); border: 1px solid rgba(225, 75, 51, .3); border-top-right-radius: 4px; } }
+.mock-avatar { align-items: center; background: $surface-light; border: 1px solid $border; border-radius: 50%; display: flex; flex-shrink: 0; height: 34px; justify-content: center; width: 34px; color: $primary-light; }
+.mock-tag { color: $primary-light; display: block; font-size: .72rem; font-weight: 800; letter-spacing: .08em; margin-bottom: 4px; text-transform: uppercase; }
+.mock-typing p { align-items: center; color: $text-secondary; display: flex; gap: 8px; }
+
+.mock-feedback { background: rgba(255, 255, 255, .03); border: 1px solid $border; border-radius: 16px; margin-left: 44px; padding: 16px; }
+.mock-feedback__top { align-items: flex-start; display: flex; gap: 14px; p { color: #d6dbe4; line-height: 1.6; margin: 0; } }
+.mock-score { border-radius: 12px; flex-shrink: 0; font-size: 1.5rem; font-weight: 900; padding: 6px 12px;
+  small { font-size: .8rem; opacity: .7; }
+  &.good { background: rgba(52, 211, 153, .12); color: $good; }
+  &.ok { background: rgba(251, 191, 36, .12); color: $ok; }
+  &.low { background: rgba(248, 113, 113, .12); color: $low; }
+}
+.mock-criteria { display: grid; gap: 8px 20px; grid-template-columns: 1fr 1fr; margin-top: 14px; }
+.mock-criterion { align-items: center; display: flex; font-size: .82rem; gap: 10px;
+  span { color: $text-secondary; width: 104px; }
+  b { text-align: right; width: 18px; }
+}
+.mock-reveal { border-top: 1px solid $border; margin-top: 12px; padding-top: 10px;
+  > button { align-items: center; background: none; border: 0; color: $primary-light; cursor: pointer; display: flex; font-weight: 700; gap: 6px; padding: 0; text-align: left; svg { flex-shrink: 0; transition: transform .2s; } }
+  &.is-open > button svg { transform: rotate(180deg); }
+}
+.mock-reveal__body { color: #d6dbe4; line-height: 1.6; margin-top: 8px; p { margin: 0 0 8px; } }
+
+.mock-composer { background: $surface; border: 1px solid $border; border-radius: 18px; bottom: 16px; padding: 14px; position: sticky; box-shadow: 0 -10px 40px rgba(0, 0, 0, .35);
+  textarea { background: transparent; border: 0; color: $text; font: inherit; line-height: 1.6; outline: none; resize: vertical; width: 100%; min-height: 90px; }
+}
+.mock-composer__actions { align-items: center; display: flex; gap: 10px; justify-content: space-between;
+  > div { display: flex; gap: 10px; }
+  .mock-button--primary { margin-top: 0; }
+}
+
+/* Scorecard */
+.mock-result { align-items: center; display: flex; gap: 28px; h1 { font-size: clamp(1.4rem, 3.5vw, 2rem); margin: 0 0 6px; } }
+.mock-ring { --tone: #{$primary-light}; align-items: center; background: conic-gradient(var(--tone) calc(var(--value) * 1%), rgba(255, 255, 255, .08) 0); border-radius: 50%; display: flex; flex-shrink: 0; height: 132px; justify-content: center; width: 132px;
+  &::before { background: $surface; border-radius: 50%; content: ''; inset: 12px; position: absolute; }
+  position: relative;
+  span { font-size: 2.2rem; font-weight: 900; position: relative; small { font-size: 1rem; opacity: .7; } }
+  &.good { --tone: #{$good}; } &.ok { --tone: #{$ok}; } &.low { --tone: #{$low}; }
+}
+.mock-grid { display: grid; gap: 18px; grid-template-columns: 1fr 1fr; .mock-card { margin-bottom: 0; } margin-bottom: 18px; }
+.mock-list { line-height: 1.6; margin: 0; padding-left: 20px; li + li { margin-top: 6px; }
+  &.good li::marker { color: $good; } &.low li::marker { color: $low; }
+}
+.mock-review .mock-reveal:first-child { border-top: 0; margin-top: 0; padding-top: 0; }
+.mock-review .mock-reveal > button { color: $text; gap: 10px; }
+.mock-review .mock-feedback { margin-left: 0; }
+.mock-actions { display: flex; flex-wrap: wrap; gap: 12px; .mock-button--primary { margin-top: 0; } }
+
+.mock-state { align-items: center; background: $surface; border: 1px solid $border; border-radius: 24px; display: flex; flex-direction: column; gap: 8px; justify-content: center; margin: 60px auto; max-width: 560px; min-height: 260px; padding: 30px; text-align: center; p { color: $text-secondary; } }
+
+.spin { animation: mock-spin 1s linear infinite; }
+@keyframes mock-spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 640px) {
+  .mock-page { padding: 28px 16px 52px; }
+  .mock-modes, .mock-grid, .mock-criteria { grid-template-columns: 1fr; }
+  .mock-bubble { max-width: 100%; }
+  .mock-feedback { margin-left: 0; }
+  .mock-result { flex-direction: column; text-align: center; }
+  .mock-composer__actions { align-items: stretch; flex-direction: column; > div { justify-content: flex-end; } }
+}

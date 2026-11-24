@@ -8,7 +8,7 @@ import {
   deleteInterviewReport,
   renameInterviewReport,
 } from '../services/interview.api'
-import { Trash, SquarePen , Upload} from 'lucide-react'
+import { Trash, SquarePen , Upload, Mic } from 'lucide-react'
 const priorityFor = (weight) =>
   weight >= 5 ? 'high' : weight >= 3 ? 'medium' : 'low'
 
@@ -262,6 +262,15 @@ export const Interview = () => {
               hidden
               onChange={handleResumeReupload}
             />
+            <button
+              type="button"
+              className="action-btn primary"
+              onClick={() => navigate(`/interview/${report._id}/mock`)}
+              title="Practise this role with an AI interviewer that grades your answers"
+            >
+              <Mic />
+              Start Mock Interview
+            </button>
             <button
               className="action-btn ghost"
               onClick={() => resumeInputRef.current?.click()}
