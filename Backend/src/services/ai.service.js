@@ -4,8 +4,8 @@ const puppeteer = require("puppeteer")
 
 const ai = process.env.GOOGLE_GENAI_API_KEY
   ? new GoogleGenAI({
-      apiKey: process.env.GOOGLE_GENAI_API_KEY,
-    })
+    apiKey: process.env.GOOGLE_GENAI_API_KEY,
+  })
   : null
 
 const interviewReportSchema = z.object({
@@ -84,13 +84,29 @@ function validateSkillRoadmap(value) {
   const plan = skillRoadmapResponseSchema.parse(value)
   if (!plan.title.trim() || plan.title.length > 140 || plan.topics.length < 2 || plan.topics.length > 12) throw new Error('Invalid roadmap topics')
   const allowedTypes = new Set(['documentation', 'video', 'article', 'course'])
+  const normaliseResourceUrl = (value) => {
+    const text = String(value || '').trim().replace(/\\/g, '')
+    const candidate = /^www\./i.test(text) ? `https://${text}` : text
+    try {
+      const parsed = new URL(candidate)
+      return parsed.protocol === 'https:' || parsed.protocol === 'http:' ? parsed.href : null
+    } catch { return null }
+  }
   const topics = plan.topics.map((topic) => {
     if (!topic.title.trim() || topic.title.length > 140 || !topic.description.trim() || topic.description.length > 700 || !Number.isFinite(topic.estimatedHours) || topic.estimatedHours <= 0 || topic.estimatedHours > 40) throw new Error('Invalid roadmap topic')
-    if (topic.resources.length < 1 || topic.resources.length > 4) throw new Error('Invalid roadmap resources')
-    const resources = topic.resources.map((resource) => {
-      if (!resource.title.trim() || !resource.platform.trim() || !allowedTypes.has(resource.type) || !/^https:\/\/.+/i.test(resource.url)) throw new Error('Invalid roadmap resource URL')
-      return resource
-    })
+    const resources = topic.resources.slice(0, 4).map((resource) => {
+      const url = normaliseResourceUrl(resource.url)
+      if (!url || !resource.title.trim() || !resource.platform.trim() || !allowedTypes.has(resource.type)) return null
+      return { ...resource, url }
+    }).filter(Boolean)
+    if (!resources.length) {
+      resources.push({
+        title: `YouTube learning videos for ${topic.title}`,
+        type: 'video',
+        url: `https://www.youtube.com/results?search_query=${encodeURIComponent(`${topic.title} tutorial`)}`,
+        platform: 'YouTube',
+      })
+    }
     return { ...topic, resources }
   })
   return { title: plan.title, topics }
@@ -578,12 +594,12 @@ async function generateLegacyPdfFromHtml(htmlContent) {
   return pdfBuffer;
 }
 
-async function generateLegacyResumePdf({resume , selfDescription , jobDescription}){
+async function generateLegacyResumePdf({ resume, selfDescription, jobDescription }) {
   const resumepdfSchema = z.object({
-    html:z.string().describe("The HTML content of the resume which can be converted to pdf using any library like puppeteer")
+    html: z.string().describe("The HTML content of the resume which can be converted to pdf using any library like puppeteer")
   })
 
-  const prompt =`You are a senior resume writer and professional document designer with 15+ years of experience creating resumes for FAANG, Fortune 500, startups, and ATS systems.
+  const prompt = `You are a senior resume writer and professional document designer with 15+ years of experience creating resumes for FAANG, Fortune 500, startups, and ATS systems.
 
 Your goal is to produce a resume that could realistically be delivered by a professional resume writing agency.
 
@@ -921,11 +937,11 @@ Return only valid JSON.`
 
   const response = await ai.models.generateContent({
     model: 'gemini-3.5-flash-lite',
-      contents: prompt,
-      config: {
-        responseMimeType: 'application/json',
-        responseJsonSchema: toJSONSchema(resumepdfSchema),
-      },
+    contents: prompt,
+    config: {
+      responseMimeType: 'application/json',
+      responseJsonSchema: toJSONSchema(resumepdfSchema),
+    },
   })
   const jsonContent = JSON.parse(response.text)
 
@@ -933,8 +949,8 @@ Return only valid JSON.`
 
   const pdfBuffer = await generateLegacyPdfFromHtml(jsonContent.html)
 
-//   console.log("PDF Buffer:", pdfBuffer);
-// console.log("Buffer Length:", pdfBuffer?.length);
+  //   console.log("PDF Buffer:", pdfBuffer);
+  // console.log("Buffer Length:", pdfBuffer?.length);
 
   return pdfBuffer
 }

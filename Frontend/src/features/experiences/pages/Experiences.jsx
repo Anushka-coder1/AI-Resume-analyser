@@ -71,7 +71,7 @@ export const Experiences = () => {
       <div className="experience-orb experience-orb-two" />
       <div className="experiences-container">
         <nav className="community-nav">
-          <button type="button" onClick={() => navigate('/')}>← Back to dashboard</button>
+          
           <span>Interview community</span>
         </nav>
 
