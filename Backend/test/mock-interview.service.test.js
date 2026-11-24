@@ -6,7 +6,24 @@ const {
   toPublicSession,
   normaliseCount,
   normaliseMode,
+  normaliseTimeLimit,
+  normaliseTimeTaken,
 } = require('../src/services/mock-interview.service')
+
+describe('timer helpers', () => {
+  test('only allowed time limits are accepted', () => {
+    expect(normaliseTimeLimit('120')).toBe(120)
+    expect(normaliseTimeLimit(45)).toBe(0)
+    expect(normaliseTimeLimit(undefined)).toBe(0)
+  })
+
+  test('time taken is rounded, capped and rejects junk', () => {
+    expect(normaliseTimeTaken(12.6)).toBe(13)
+    expect(normaliseTimeTaken(99999)).toBe(3600)
+    expect(normaliseTimeTaken(-5)).toBeNull()
+    expect(normaliseTimeTaken('abc')).toBeNull()
+  })
+})
 
 const report = {
   technicalQuestions: [
@@ -60,6 +77,15 @@ describe('fallbackEvaluate', () => {
       expect(value).toBeGreaterThanOrEqual(0)
       expect(value).toBeLessThanOrEqual(10)
     }
+  })
+
+  test('unpunctuated voice transcripts are not penalised on structure', () => {
+    const transcript = 'so react uses a virtual dom which is an in memory copy of the real dom and when state changes it does diffing and reconciliation then batching updates so only the changed nodes are updated which gives better performance especially in large apps with frequent updates'
+    const base = { type: 'technical', intention: 'React rendering', modelAnswer: report.technicalQuestions[0].answer, userAnswer: transcript }
+    const asText = fallbackEvaluate(base)
+    const asVoice = fallbackEvaluate({ ...base, inputMode: 'voice' })
+    expect(asVoice.criteria.structure).toBeGreaterThan(asText.criteria.structure)
+    expect(asVoice.score).toBeGreaterThanOrEqual(asText.score)
   })
 
   test('behavioral answers missing STAR parts get a STAR tip', () => {
