@@ -13,6 +13,7 @@ import AppLayout from './Layout/AppLayout';
 import { MyInterviews } from './features/interview/pages/MyInterviews';
 import { SkillRoadmap } from './features/interview/pages/SkillRoadmap';
 import { Roadmaps } from './features/interview/pages/Roadmaps';
+import { MockInterview } from './features/interview/pages/MockInterview';
 
 
 
@@ -35,6 +36,10 @@ export const router = createBrowserRouter([
       {
         path: '/interview/:interviewId',
         element: <Protected><Interview /></Protected>,
+      },
+      {
+        path: '/interview/:interviewId/mock',
+        element: <Protected><MockInterview /></Protected>,
       },
       {
         path: '/interview/:interviewId/skill-gap/:skillName',
