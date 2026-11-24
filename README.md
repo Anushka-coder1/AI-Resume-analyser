@@ -1,760 +1,307 @@
-# AI Resume Analyzer 🚀
+# AI Resume Analyser 🚀
 
-An AI-powered resume analysis and interview preparation platform that helps candidates evaluate their resumes against job descriptions, identify skill gaps, generate personalized insights, and analyze interview experiences using Generative AI.
+An AI-powered interview preparation platform. Upload your resume and a job description to get an explainable match score, your skill gaps, likely interview questions and a preparation plan. Then practise with an **AI mock interviewer** that grades your typed or spoken answers, follow personalised learning roadmaps for missing skills, and learn from interview experiences shared by the community.
 
-The project combines **MERN stack development, Generative AI, automated evaluation** to provide an end-to-end career preparation platform.
-
----
-
-## 📌 Features
-
-### 📄 Resume Analysis
-
-* Upload and analyze resumes using AI.
-* Extract relevant information such as:
-  * Skills
-  * Education
-  * Projects
-  * Experience
-  * Certifications
-  * Technologies
-* Identify strengths and weaknesses in the resume.
-* Generate structured resume feedback.
-
-### 🎯 ATS & Job Description Matching
-
-* Compare a resume against a given Job Description.
-* Generate an AI-based match score.
-* Identify:
-  * Matching skills
-  * Missing skills
-  * Relevant keywords
-  * Experience gaps
-  * Job-specific recommendations
-
-### 🤖 AI-Powered Interview Report
-
-Generate structured interview reports using the **Gemini API**.
-
-The system can analyze an interview experience and extract:
-
-* Interview rounds
-* Questions asked
-* Technical topics
-* Difficulty
-* Skills being evaluated
-* Candidate performance indicators
-* Areas that require further preparation
-
-### 🏷️ Interview Question Classification
-
-The planned interview-analysis pipeline can automatically classify questions into rounds such as:
-
-```text
-OA
-Communication
-Technical
-HR
-Managerial
-```
-
-Questions can additionally receive topic tags such as:
-
-```text
-Array
-String
-SQL
-Express.js
-Docker
-Python
-Machine Learning
-DBMS
-Operating Systems
-System Design
-```
-
-Example:
-
-```json
-{
-  "round": "Technical",
-  "question": "How does Express middleware work?",
-  "tags": ["Node.js", "Express.js", "Backend"]
-}
-```
-
-### 🔐 Authentication & Security
-
-* JWT-based authentication
-* HTTP-only cookies
-* Protected routes
-* Token blacklisting
-* Secure authentication flow
-* Input sanitization
-* API rate limiting
-* Security headers
-
-### 📑 ATS-Friendly PDF Generation
-
-The application can generate ATS-friendly resume PDFs using **Puppeteer**.
-
-### 🧪 Automated Testing
-
-Backend APIs are tested using:
-
-* Jest
-* Supertest
-
-Test coverage includes important authentication and API workflows.
-
-### 📊 AI Evaluation
-
-The project includes an evaluation pipeline using **DeepEval** to measure the quality of AI-generated outputs.
-
-Example evaluation:
-
-```text
-Match Score Evaluation
-Score: 1.0
-Generated Match Score: 85
-```
+Built with the **MERN stack** and **Google Gemini**, with automated tests (Jest) and AI-output evaluation (DeepEval).
 
 ---
 
-# 🏗️ System Architecture
+## ✨ Features
+
+### 📄 Resume ↔ Job Description Analysis
+- Upload your **resume as a PDF** (max 3 MB) and/or write a short self-description.
+- **Paste the job description** or **upload it as a PDF**.
+- **Explainable match score.** The score comes from a weighted skill-matching engine rather than a black-box AI guess:
+  - A catalogue of **68 skills**, each with aliases (for example `node`, `nodejs` and `node.js` all count as Node.js).
+  - The job description is split into *required* and *preferred* sections. Required skills carry more weight.
+  - The score is the share of weighted required skills that your resume covers.
+- **Evidence checklist.** For every skill, the report shows whether it was found, with the matching line from your resume, or the line from the job description that asks for it.
+- **Skill gaps** ranked by severity (high, medium, low).
+
+### 🤖 AI Interview Report (Gemini)
+- Likely **technical questions** and **behavioral questions**. Each one includes the interviewer's intention and a recommended answer.
+- A **day-by-day preparation plan** for the role.
+- A **fallback report** is generated if Gemini is not configured or fails, so the app keeps working.
+
+### 🎙️ AI Mock Interview
+Practise a real interview using the questions from your report.
+- Choose **Mixed, Technical or Behavioral**, **3, 5, 8 or 10 questions**, and an optional **timer per question** (1, 2 or 3 minutes).
+- The AI interviewer asks **one question at a time**. You can:
+  - **type your answer**, or
+  - **speak it**: voice is turned into editable text using the browser's Web Speech API (Chrome and Edge).
+- Questions can be **read aloud** by the interviewer (text-to-speech).
+- Every answer is **graded from 0 to 10** on four criteria: **relevance, depth, structure (STAR for behavioral questions) and communication**. You also get:
+  - written feedback,
+  - an improved version of your answer,
+  - the points a strong answer should cover.
+- If an answer is vague, the interviewer asks a **follow-up question** (up to 2 per session).
+- At the end, a **scorecard** shows your overall score, strengths, improvement areas and weak skills. Each weak skill links to a learning roadmap. The time taken per answer is also shown.
+- **Attempt history** for each report, and unfinished sessions can be resumed.
+- Spoken answers are not penalised for missing punctuation. The model answer stays hidden until you have answered. If Gemini is unavailable, a rule-based grader is used instead.
+
+### 🗺️ Skill-Gap Learning Roadmaps
+- Generate a **Gemini-built roadmap for any missing skill**. It contains ordered topics, estimated hours and learning resources (documentation, articles, videos).
+- Tasks are scheduled across your chosen **duration and daily study hours**.
+- **Track progress**: mark tasks as done, log the time you spend, and see overall progress.
+- **Regenerate**, rename or delete roadmaps.
+
+### 📈 Resume Versions & Report History
+- **Re-upload an improved resume** against the same job description. Every version is kept, and the report shows how your match score changed (for example `v1 55% → v3 82%`).
+- A saved **report history** with pagination, plus rename and delete. Deleting a report also removes its roadmaps.
+
+### 🌐 Community Interview Experiences
+- Share your interview experience for a company and role.
+- **Gemini structures each post** into rounds, and labels every item as a question, activity or statement with topic tags. The prompt tells it not to invent or remove information, and an *integrity summary* is stored with each post.
+- Browse the community feed (with pagination) and open individual posts. Browsing is public; posting requires an account.
+
+### 🔐 Authentication
+- Register and log in with email and password. Passwords are hashed with **bcrypt**.
+- **JWT stored in an HTTP-only cookie**, valid for 1 day.
+- **Logout with token blacklisting**, and protected API and frontend routes.
+- Every report, mock interview and roadmap can only be accessed by its owner.
+
+---
+
+## 🚧 Current Limitations
+
+These are partly built or planned, and are **not** available in the UI yet:
+
+| Item | Status |
+|---|---|
+| Tailored resume PDF | A backend endpoint generates it with Puppeteer (`POST /api/interview/resume/pdf/:id`), but there is no download button in the UI yet. |
+| Google sign-in | Backend OAuth routes exist, but the button on the login page is disabled. The backend still requires `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` to start. |
+| Community posts | Posts cannot yet be edited, deleted, reported or moderated. |
+| API hardening | No rate limiting, security headers (Helmet) or central request validation yet. |
+| Tests | Backend tests connect to the configured MongoDB, so use a separate test database. |
+
+---
+
+## 🏗️ Architecture
 
 ```text
-                    ┌──────────────────────┐
-                    │      User            │
-                    └──────────┬───────────┘
-                               │
-                               ▼
-                    ┌──────────────────────┐
-                    │   React Frontend     │
-                    │   User Interface     │
-                    └──────────┬───────────┘
-                               │
-                         REST API
-                               │
-                               ▼
-                    ┌──────────────────────┐
-                    │  Node.js + Express   │
-                    │      Backend         │
-                    └───────┬───────┬──────┘
-                            │       │
-              ┌─────────────┘       └──────────────┐
-              ▼                                    ▼
-     ┌──────────────────┐                 ┌──────────────────┐
-     │    MongoDB       │                 │    Gemini API    │
-     │    Database      │                 │   Generative AI  │
-     └──────────────────┘                 └──────────────────┘
-                                                   │
-                                                   ▼
-                                         ┌──────────────────┐
-                                         │ AI Resume /      │
-                                         │ Interview Report │
-                                         └──────────────────┘
-
-                         ┌──────────────────┐
-                         │    Puppeteer     │
-                         │   PDF Generator  │
-                         └──────────────────┘
+┌────────────────────────┐        REST (JSON, cookies)        ┌──────────────────────────┐
+│  React + Vite frontend │ ─────────────────────────────────▶ │  Node.js + Express API   │
+│  Web Speech API (voice)│                                    │                          │
+└────────────────────────┘                                    │  • Skill-matching engine │
+                                                              │  • Mock interview engine │
+                                                              │  • Roadmap scheduler     │
+                                                              └─────┬──────────┬─────────┘
+                                                                    │          │
+                                                          ┌─────────▼──┐   ┌───▼──────────────┐
+                                                          │  MongoDB   │   │  Google Gemini   │
+                                                          │ (Mongoose) │   │ (structured JSON)│
+                                                          └────────────┘   └──────────────────┘
 ```
 
----
-
-# 🛠️ Tech Stack
-
-## Frontend
-
-* React.js
-* Vite
-* JavaScript
-* HTML5
-* CSS3
-* Tailwind CSS
-* Axios
-* React Router
-
-## Backend
-
-* Node.js
-* Express.js
-* REST APIs
-* JWT Authentication
-* HTTP-only Cookies
-
-## Database
-
-* MongoDB
-* Mongoose
-
-## Generative AI
-
-* Google Gemini API
-* Google GenAI SDK
-
-## AI Evaluation
-
-* DeepEval
-* Python
-* NLP-based evaluation
-
-## PDF Generation
-
-* Puppeteer
-
-## Testing
-
-* Jest
-* Supertest
-
-## Development Tools
-
-* Git
-* GitHub
-* Postman
-* VS Code
+All Gemini calls use **structured JSON output** validated with **Zod**. AI features fall back to rule-based logic where possible.
 
 ---
 
-# 📂 Project Structure
+## 🛠️ Tech Stack
+
+| Layer | Technologies |
+|---|---|
+| Frontend | React 19, Vite, React Router, Axios, SCSS, lucide-react, Web Speech API |
+| Backend | Node.js, Express 5, Multer, pdf-parse, Passport, JSON Web Tokens, bcrypt |
+| Database | MongoDB, Mongoose |
+| AI | Google Gemini (`@google/genai`), Zod schemas |
+| PDF | Puppeteer |
+| Testing | Jest, Supertest |
+| AI evaluation | Python, DeepEval (G-Eval metrics) |
+| Deployment | Vercel (frontend) |
+
+---
+
+## 📂 Project Structure
 
 ```text
 AI-Resume-analyser/
-│
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── services/
-│   │   ├── hooks/
-│   │   └── ...
-│   │
-│   ├── public/
-│   ├── package.json
-│   └── vite.config.js
-│
-├── backend/
-│   ├── controllers/
-│   ├── models/
-│   ├── routes/
-│   ├── middleware/
-│   ├── services/
-│   ├── utils/
-│   ├── tests/
+├── Backend/
 │   ├── server.js
-│   └── package.json
-│
-├── evaluation/
-│   ├── dataset/
-│   │   ├── test_case.json
-│   │   └── test_resume.pdf
-│   │
-│   ├── metrics/
-│   │   └── test_match_score.py
-│   │
-│   ├── test_resume_analyser.py
-│   └── requirements.txt
-│
-├── README.md
-└── .gitignore
+│   ├── scripts/                 # maintenance scripts (e.g. re-score old reports)
+│   ├── src/
+│   │   ├── app.js               # Express app and route mounting
+│   │   ├── config/              # database, passport
+│   │   ├── controllers/         # auth, interview, mock-interview, roadmap, experience
+│   │   ├── middlewares/         # auth (JWT), file upload (PDF only)
+│   │   ├── models/              # Mongoose schemas
+│   │   ├── routes/
+│   │   └── services/            # ai, skill-matching, mock-interview, roadmap
+│   └── test/                    # Jest test suites
+├── Frontend/
+│   ├── src/
+│   │   ├── features/
+│   │   │   ├── auth/            # login, register, auth context
+│   │   │   ├── interview/       # home, report, mock interview, roadmaps
+│   │   │   └── experiences/     # community feed
+│   │   ├── Layout/
+│   │   └── app.routes.jsx
+│   ├── vercel.json
+│   └── vite.config.js
+├── Evaluation/
+│   ├── dataset/                 # test_case.json, test_resume.pdf
+│   ├── metrics/                 # DeepEval metric scripts
+│   └── test_resume_anslyser.py
+└── README.md
 ```
 
 ---
 
-# ⚙️ Installation
+## ⚙️ Getting Started
 
-## 1. Clone the Repository
+### Prerequisites
+- Node.js 20 or newer
+- A MongoDB connection string (local MongoDB or Atlas)
+- A Google Gemini API key (optional, but needed for AI questions, roadmaps and AI grading)
+- Google OAuth client credentials. The backend will not start without them, even though the Google sign-in button is disabled.
+
+### 1. Clone and install
 
 ```bash
-git clone https://github.com/<your-username>/AI-Resume-analyser.git
-
+git clone https://github.com/Anushka-coder1/AI-Resume-analyser.git
 cd AI-Resume-analyser
+
+cd Backend && npm install
+cd ../Frontend && npm install
 ```
 
----
+> **Puppeteer install error** ("Failed to set up chrome … executable is missing")? A previous browser download was interrupted. Delete `%USERPROFILE%\.cache\puppeteer\chrome` (or `~/.cache/puppeteer/chrome` on Mac and Linux) and run `npm install` again.
 
-## 2. Install Frontend Dependencies
+### 2. Environment variables
 
-```bash
-cd frontend
-npm install
-```
-
----
-
-## 3. Install Backend Dependencies
-
-```bash
-cd ../backend
-npm install
-```
-
----
-
-# 🔑 Environment Variables
-
-Create a `.env` file inside the `backend` directory.
+**`Backend/.env`**
 
 ```env
-PORT=5000
-
+PORT=3000
 MONGO_URI=your_mongodb_connection_string
-
-JWT_SECRET=your_jwt_secret
-
+JWT_SECRET=a_long_random_secret
 GOOGLE_GENAI_API_KEY=your_gemini_api_key
-
 FRONTEND_URL=http://localhost:5173
+BACKEND_URL=http://localhost:3000
+GOOGLE_CLIENT_ID=your_google_oauth_client_id
+GOOGLE_CLIENT_SECRET=your_google_oauth_client_secret
 ```
 
-> Never commit your `.env` file or API keys to GitHub.
+**`Frontend/.env`**
 
----
+```env
+VITE_BACKEND_URL=http://localhost:3000
+```
 
-# ▶️ Running the Application
+> Never commit `.env` files. `FRONTEND_URL` must exactly match the address the frontend runs on, otherwise the browser blocks requests (CORS).
 
-## Start Backend
+### 3. Run
 
 ```bash
-cd backend
-npm run dev
+# terminal 1
+cd Backend
+npm run dev          # http://localhost:3000
+
+# terminal 2
+cd Frontend
+npm run dev          # http://localhost:5173
 ```
 
-The backend will run on:
+The frontend is pinned to port **5173**. If another app is already using that port, Vite stops with an error instead of switching ports. Stop the other app and try again.
 
-```text
-http://localhost:5000
-```
+For voice answers in the mock interview, use **Chrome or Edge** and allow microphone access. Browsers only allow the microphone on `localhost` or HTTPS.
 
-## Start Frontend
+---
 
-Open another terminal:
+## 🔌 API Overview
+
+All routes are under `/api`. 🔒 means the route needs a logged-in user (JWT cookie).
+
+| Area | Endpoints |
+|---|---|
+| Auth | `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, 🔒 `GET /auth/get-me` |
+| Reports | 🔒 `POST /interview` (multipart: `resume`, `jobDescriptionFile`), 🔒 `GET /interview`, 🔒 `GET/PATCH/DELETE /interview/report/:id`, 🔒 `GET /interview/report/:id/versions`, 🔒 `POST /interview/resume/pdf/:id` |
+| Mock interview | 🔒 `POST /mock-interview/start/:reportId`, 🔒 `POST /mock-interview/:id/answer`, 🔒 `POST /mock-interview/:id/finish`, 🔒 `GET/DELETE /mock-interview/:id`, 🔒 `GET /mock-interview/report/:reportId` |
+| Roadmaps | 🔒 `POST /roadmaps/generate`, 🔒 `GET /roadmaps`, 🔒 `GET/PATCH/DELETE /roadmaps/:id`, 🔒 `GET /roadmaps/:id/progress`, 🔒 `PATCH /roadmaps/:id/tasks/:taskId`, 🔒 `PATCH /roadmaps/:id/tasks/:taskId/time`, 🔒 `POST /roadmaps/:id/regenerate` |
+| Community | `GET /experiences`, `GET /experiences/:id`, 🔒 `POST /experiences` |
+
+---
+
+## 🧪 Testing
 
 ```bash
-cd frontend
-npm run dev
-```
-
-The frontend will run on:
-
-```text
-http://localhost:5173
-```
-
----
-
-# 🔄 Application Workflow
-
-### Resume Analysis
-
-```text
-Upload Resume
-      ↓
-Resume Parsing
-      ↓
-Information Extraction
-      ↓
-AI Analysis
-      ↓
-Skills & Experience Extraction
-      ↓
-Feedback Generation
-      ↓
-Structured Report
-```
-
-### Job Description Matching
-
-```text
-Resume
-   +
-Job Description
-       ↓
-Text / Skill Extraction
-       ↓
-AI Analysis
-       ↓
-Skill Comparison
-       ↓
-Missing Keyword Detection
-       ↓
-Match Score
-       ↓
-Personalized Recommendations
-```
-
-### Interview Experience Analysis
-
-```text
-Interview Experience
-        ↓
-Text Processing
-        ↓
-Round Classification
-        ↓
-Question Extraction
-        ↓
-Topic Classification
-        ↓
-Difficulty / Skill Analysis
-        ↓
-Structured Interview Report
-```
-
----
-
-# 🧠 AI Interview Analysis
-
-One of the major components of the project is converting unstructured interview experiences into structured data.
-
-For example, a candidate may provide:
-
-```text
-Round 1:
-Tell me about yourself.
-Explain your project.
-Which technologies did you use?
-Write a SQL query using LEFT JOIN.
-Reverse a string in Python.
-
-Round 2:
-Tell me about your education.
-What does your father do?
-Why do you want to join our company?
-```
-
-The AI system can transform this into:
-
-```json
-{
-  "rounds": [
-    {
-      "round": "Technical",
-      "questions": [
-        {
-          "question": "Explain your project.",
-          "tags": ["Projects", "System Understanding"]
-        },
-        {
-          "question": "Write a SQL query using LEFT JOIN.",
-          "tags": ["SQL", "DBMS"]
-        },
-        {
-          "question": "Reverse a string in Python.",
-          "tags": ["Python", "Strings"]
-        }
-      ]
-    },
-    {
-      "round": "HR",
-      "questions": [
-        {
-          "question": "Tell me about your education.",
-          "tags": ["Background"]
-        },
-        {
-          "question": "Why do you want to join our company?",
-          "tags": ["Motivation", "HR"]
-        }
-      ]
-    }
-  ]
-}
-```
-
-This structured information can then be used to build interview preparation features.
-
----
-
-# 📊 Interview Intelligence
-
-The extracted interview data can enable additional features such as:
-
-### Topic Frequency
-
-```text
-SQL              ██████████
-Python           ████████
-DSA              ███████
-React            █████
-DBMS             ████
-Docker           ███
-```
-
-### Company-Specific Interview Patterns
-
-The system can identify frequently asked topics from previous interview experiences.
-
-For example:
-
-```text
-Company
-   ↓
-Interview Experiences
-   ↓
-Round Classification
-   ↓
-Question Extraction
-   ↓
-Topic Extraction
-   ↓
-Frequency Analysis
-   ↓
-Interview Preparation Roadmap
-```
-
----
-
-# 🧪 Testing
-
-Run backend tests using Jest:
-
-```bash
+cd Backend
 npm test
 ```
 
-Example test structure:
+| Suite | What it covers |
+|---|---|
+| `test/auth/*` | Register, login, logout, get-me |
+| `test/app.test.js`, `test/basic.test.js` | App setup and basic routes |
+| `test/skill-matching.test.js` | Skill detection, required vs preferred weighting, match score |
+| `test/roadmap.service.test.js` | Topic ordering and roadmap scheduling |
+| `test/mock-interview.service.test.js` | Question selection, offline grading (including voice transcripts), scoring, timers, hiding answers |
 
-```text
-test/
-├── basic.test.js
-├── app.test.js
-└── auth/
-    ├── register.test.js
-    └── login.test.js
+The test setup connects to the MongoDB in `MONGO_URI`, so point it at a test database. The logic-only suites can run without a database:
+
+```bash
+npx jest test/mock-interview.service.test.js --config '{"testEnvironment":"node"}'
 ```
-
-API testing can also be performed using Postman.
 
 ---
 
-# 📈 AI Evaluation with DeepEval
+## 📊 AI Evaluation (DeepEval)
 
-The project includes a separate evaluation pipeline for measuring the quality of AI-generated responses.
+The `Evaluation/` folder scores the quality of the AI-generated report with DeepEval **G-Eval** metrics:
 
-Install the evaluation dependencies:
+- match score
+- skill gaps
+- technical questions
+- behavioral questions
+- preparation plan
+- hallucination
+
+The scripts call the **running backend** with the sample resume in `Evaluation/dataset/`.
 
 ```bash
-cd evaluation
-
+cd Evaluation
 python -m venv .venv
-```
+.venv\Scripts\activate            # Mac/Linux: source .venv/bin/activate
+pip install deepeval requests
 
-Activate the environment on Windows:
-
-```bash
-.venv\Scripts\activate
-```
-
-Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-Run evaluation:
-
-```bash
+# backend must be running on http://localhost:3000
+set AUTH_TOKEN=<your JWT cookie value>        # Mac/Linux: export AUTH_TOKEN=...
 python metrics/test_match_score.py
 ```
 
-The evaluation pipeline can be extended to evaluate:
-
-* Match Score
-* Answer Relevance
-* Faithfulness
-* Contextual Relevance
-* Output Consistency
-* Structured Output Accuracy
+G-Eval uses an LLM as the judge, so configure DeepEval's model first (by default it needs an OpenAI API key).
 
 ---
 
-# 🔒 Security
+## 🔒 Security Notes
 
-The application implements several security mechanisms:
-
-* JWT authentication
-* HTTP-only cookies
-* Protected API routes
-* Token invalidation / blacklisting
-* Input sanitization
-* API rate limiting
-* Security headers
-* Environment-based secret management
-
-Sensitive credentials should always be stored in environment variables.
+- Passwords are hashed with bcrypt, and JWTs are stored in HTTP-only cookies (`secure` and `sameSite=none` in production).
+- Logged-out tokens are blacklisted.
+- Every read and write of reports, mock interviews and roadmaps checks that the logged-in user owns it.
+- Uploads are limited to PDF files of at most 3 MB.
+- User answers are passed to the AI as data inside clearly marked tags, and the prompt tells the model to ignore any instructions inside them.
+- Secrets are read from environment variables.
 
 ---
 
-# 🚀 Future Enhancements
+## 🚀 Roadmap
 
-The project can be extended into a complete AI-powered career assistant.
-
-### 1. Interview Question Bank
-
-Automatically build a question bank from interview experiences.
-
-```text
-Company → Role → Round → Topic → Questions
-```
-
-### 2. Personalized Interview Preparation
-
-Generate a preparation plan based on:
-
-```text
-Resume
-+
-Job Description
-+
-Previous Interview Experiences
-+
-Skill Gaps
-```
-
-### 3. AI Mock Interview
-
-Conduct an interactive interview where AI acts as the interviewer.
-
-Possible flow:
-
-```text
-Select Role
-     ↓
-Select Difficulty
-     ↓
-AI Interview
-     ↓
-Candidate Answers
-     ↓
-AI Evaluation
-     ↓
-Final Performance Report
-```
-
-### 4. Adaptive Question Difficulty
-
-The AI can dynamically adjust question difficulty based on previous answers.
-
-```text
-Correct Answer
-     ↓
-Increase Difficulty
-
-Weak Answer
-     ↓
-Ask Conceptual / Easier Question
-```
-
-### 5. Resume Version Management
-
-Allow users to maintain multiple resumes:
-
-```text
-SDE Resume
-ML Resume
-Backend Resume
-Frontend Resume
-Data Analyst Resume
-```
-
-The system can recommend the most suitable version for a given job description.
-
-### 6. Job Recommendation
-
-Recommend relevant job opportunities based on:
-
-* Skills
-* Experience
-* Projects
-* Resume
-* Preferred role
-
-### 7. Skill Gap Roadmap
-
-Generate a personalized learning roadmap:
-
-```text
-Job Description
-      ↓
-Required Skills
-      ↓
-Current Skills
-      ↓
-Skill Gap
-      ↓
-Learning Resources
-      ↓
-Practice Questions
-      ↓
-Mock Interview
-```
-
-### 8. Interview Analytics Dashboard
-
-Provide analytics such as:
-
-* Most frequently asked topics
-* Most common interview rounds
-* Difficulty distribution
-* Company-specific trends
-* Skill coverage
-* Frequently repeated questions
+- Download button for the tailored resume PDF
+- Re-enable Google sign-in
+- Company insights from community posts (most-asked topics per company and role)
+- Score-progress chart across mock interview attempts
+- Rate limiting, Helmet and request validation
+- Isolated test database (in-memory MongoDB)
 
 ---
 
-# 🎯 Project Goals
-
-The long-term goal of the project is to build an **AI-powered career preparation platform** that connects:
-
-```text
-             ┌─────────────┐
-             │   Resume    │
-             └──────┬──────┘
-                    │
-                    ▼
-             ┌─────────────┐
-             │ Job         │
-             │ Description │
-             └──────┬──────┘
-                    │
-                    ▼
-          ┌─────────────────────┐
-          │   AI Analysis       │
-          └──────────┬──────────┘
-                     │
-          ┌──────────┴───────────┐
-          ▼                      ▼
-    Resume Feedback       Skill Gap Analysis
-          │                      │
-          └──────────┬───────────┘
-                     ▼
-              Interview Prep
-                     │
-                     ▼
-              Mock Interview
-                     │
-                     ▼
-             Performance Report
-```
-
-The objective is to move beyond simple resume scoring and provide an **end-to-end personalized interview preparation experience**.
-
----
-
-# 👩‍💻 Author
+## 👩‍💻 Author
 
 **Anushka**
-
-Master of Computer Applications (MCA)
-National Institute of Technology, Jamshedpur
+Master of Computer Applications (MCA), National Institute of Technology, Jamshedpur
 
 ---
 
-# 📄 License
+## 📄 License
 
-This project is intended for educational and portfolio purposes.
-
-Add an appropriate open-source license such as MIT if you plan to distribute the project publicly.
+This project is intended for educational and portfolio purposes. Add an open-source license (for example MIT) before distributing it publicly.
