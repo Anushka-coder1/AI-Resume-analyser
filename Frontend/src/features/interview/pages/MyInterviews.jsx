@@ -16,7 +16,7 @@ export const MyInterviews = () => {
       <div className="home-container">
         <section className="history-panel">
           <div className="history-header">
-            <h1>My Interviews</h1>
+            <h1>Reports</h1>
             <p>Open, rename, or remove saved preparation reports.</p>
           </div>
           {error || message ? (

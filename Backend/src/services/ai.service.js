@@ -128,7 +128,7 @@ Job description context: ${jobDescription.slice(0, 6000)}
 Return only JSON matching the schema. Include 2-12 ordered topics. Each topic must have 1-4 real, direct, publicly accessible learning URLs. Include both official documentation or high-quality websites and YouTube videos where useful. Never include unrelated skills, duplicate topics, placeholder URLs, search-result URLs, or more total hours than the available schedule. Resources must be appropriate for the exact skill gap.`
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3.5-flash-lite',
+      model: 'gemini-3.8-flash',
       contents: prompt,
       config: { responseMimeType: 'application/json', responseJsonSchema: toJSONSchema(skillRoadmapResponseSchema) },
     })
@@ -161,7 +161,7 @@ Use only the supplied task title and source description. Do not add technologies
 Tasks:\n${JSON.stringify(sourceTasks)}`
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3.5-flash-lite',
+      model: 'gemini-3.8-flash',
       contents: prompt,
       config: { responseMimeType: 'application/json', responseJsonSchema: toJSONSchema(roadmapPersonalizationSchema) },
     })
@@ -238,7 +238,7 @@ Strict rules:
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3.5-flash-lite',
+      model: 'gemini-3.8-flash',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
@@ -560,7 +560,7 @@ Return nothing except the JSON object.`
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3.5-flash-lite',
+      model: 'gemini-3.8-flash',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
@@ -936,7 +936,7 @@ No code fences.
 Return only valid JSON.`
 
   const response = await ai.models.generateContent({
-    model: 'gemini-3.5-flash-lite',
+    model: 'gemini-3.8-flash',
     contents: prompt,
     config: {
       responseMimeType: 'application/json',
@@ -1017,7 +1017,7 @@ async function generateResumePdf({ resume, selfDescription, jobDescription }) {
   if (ai) {
     const prompt = `Rewrite only the factual content in this resume for the target role. Never invent facts. Return JSON matching the schema: name, contact, summary, skills, and sections. Sections can be Experience, Projects, Education, or Certifications. Keep content concise enough for one A4 page.\n\nResume:\n${resume}\n\nSelf description:\n${selfDescription}\n\nTarget job description:\n${jobDescription}`
     const response = await ai.models.generateContent({
-      model: 'gemini-3.5-flash-lite', contents: prompt,
+      model: 'gemini-3.8-flash', contents: prompt,
       config: { responseMimeType: 'application/json', responseJsonSchema: toJSONSchema(resumeContentSchema) },
     })
     content = resumeContentSchema.parse(JSON.parse(response.text))
@@ -1083,7 +1083,7 @@ Grading rules:
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3.5-flash-lite',
+      model: 'gemini-3.8-flash',
       contents: prompt,
       config: { responseMimeType: 'application/json', responseJsonSchema: toJSONSchema(mockAnswerEvaluationSchema) },
     })
@@ -1133,7 +1133,7 @@ Base every point on the transcript. Return only JSON matching the schema.`
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3.5-flash-lite',
+      model: 'gemini-3.8-flash',
       contents: prompt,
       config: { responseMimeType: 'application/json', responseJsonSchema: toJSONSchema(mockSummarySchema) },
     })

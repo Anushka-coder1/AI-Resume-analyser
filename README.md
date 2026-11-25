@@ -1,4 +1,4 @@
-# AI Resume Analyser 🚀
+# AI Resume Analyser
 
 An AI-powered interview preparation platform. Upload your resume and a job description to get an explainable match score, your skill gaps, likely interview questions and a preparation plan. Then practise with an **AI mock interviewer** that grades your typed or spoken answers, follow personalised learning roadmaps for missing skills, and learn from interview experiences shared by the community.
 
@@ -6,9 +6,9 @@ Built with the **MERN stack** and **Google Gemini**, with automated tests (Jest)
 
 ---
 
-## ✨ Features
+## Features
 
-### 📄 Resume ↔ Job Description Analysis
+### Resume ↔ Job Description Analysis
 - Upload your **resume as a PDF** (max 3 MB) and/or write a short self-description.
 - **Paste the job description** or **upload it as a PDF**.
 - **Explainable match score.** The score comes from a weighted skill-matching engine rather than a black-box AI guess:
@@ -18,12 +18,12 @@ Built with the **MERN stack** and **Google Gemini**, with automated tests (Jest)
 - **Evidence checklist.** For every skill, the report shows whether it was found, with the matching line from your resume, or the line from the job description that asks for it.
 - **Skill gaps** ranked by severity (high, medium, low).
 
-### 🤖 AI Interview Report (Gemini)
+### AI Interview Report (Gemini)
 - Likely **technical questions** and **behavioral questions**. Each one includes the interviewer's intention and a recommended answer.
 - A **day-by-day preparation plan** for the role.
 - A **fallback report** is generated if Gemini is not configured or fails, so the app keeps working.
 
-### 🎙️ AI Mock Interview
+### AI Mock Interview
 Practise a real interview using the questions from your report.
 - Choose **Mixed, Technical or Behavioral**, **3, 5, 8 or 10 questions**, and an optional **timer per question** (1, 2 or 3 minutes).
 - The AI interviewer asks **one question at a time**. You can:

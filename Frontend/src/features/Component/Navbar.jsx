@@ -6,7 +6,7 @@ import './navigation.scss'
 const navItems = [
   { name: 'Home', to: '/' },
   { name: 'Experiences', to: '/experiences' },
-  { name: 'My Interviews', to: '/reports' },
+  { name: 'Reports', to: '/reports' },
   { name: 'Learning Roadmaps', to: '/roadmaps' },
 ]
 
